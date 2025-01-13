@@ -37,17 +37,19 @@ public class UnicodeBrowser : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Projects",
-				"InputCore",
-				"EditorFramework",
-				"UnrealEd",
-				"ToolMenus",
-				"CoreUObject",
-				"ToolWidgets",
 				"ApplicationCore",
+				"CoreUObject",
+				"EditorFramework",
+				"SceneOutliner",
 				"Engine",
+				"InputCore",
+				"Projects",
+				"PropertyEditor",
 				"Slate",
 				"SlateCore",
+				"ToolMenus",
+				"ToolWidgets",
+				"UnrealEd",
 			}
 		);
 

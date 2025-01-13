@@ -2,7 +2,7 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "UnicodeBrowser",
+	"FriendlyName": "Unicode Browser",
 	"Description": "View Support for Unicode Characters in Editor/Game",
 	"Category": "Other",
 	"CreatedBy": "Tim Oxley",
@@ -17,7 +17,7 @@
 		{
 			"Name": "UnicodeBrowser",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PostDefault"
 		}
 	]
 }

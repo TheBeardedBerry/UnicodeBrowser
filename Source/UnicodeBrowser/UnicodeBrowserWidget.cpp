@@ -3,9 +3,12 @@
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "SCheckBoxList.h"
+#include "SSimpleButton.h"
 #include "SlateOptMacros.h"
 
 #include "Components/VerticalBox.h"
+
+#include "Editor/PropertyEditor/Private/Presentation/PropertyEditor/PropertyEditor.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Fonts/UnicodeBlockRange.h"
@@ -14,8 +17,10 @@
 
 #include "HAL/PlatformApplicationMisc.h"
 
+#include "UnicodeBrowser/Widgets/SUbCheckboxList.h"
 #include "UnicodeBrowser/Widgets/UbSimpleExpander.h"
 
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
@@ -23,29 +28,45 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-TSharedPtr<SCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector() const
+TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector()
 {
-	auto CheckBoxList = SNew(SCheckBoxList)
+	auto CheckBoxList = SNew(SUbCheckBoxList)
 		.ItemHeaderLabel(FText::FromString(TEXT("Unicode Block Ranges")))
 		.IncludeGlobalCheckBoxInHeaderRow(true);
-	auto const Ranges = FUnicodeBlockRange::GetUnicodeBlockRanges();
 	for (auto const& Range : Ranges)
 	{
-		CheckBoxList->AddItem(Range.DisplayName, false);
+		auto ItemWidget = SNew(SSimpleButton)
+			.Text(Range.DisplayName)
+			.OnClicked(this, &SUnicodeBrowserWidget::OnRangeClicked, Range.Index);
+		int32 Index = CheckBoxList->AddItem(ItemWidget, false);
+		RangeIndices.Add(Range.Index, Index);
 	}
 	return CheckBoxList;
 }
 
-TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(EUnicodeBlockRange BlockRange, uint32 const NumCols, TSharedPtr<SCheckBoxList> RangeSelector) const
+FReply SUnicodeBrowserWidget::OnRangeClicked(EUnicodeBlockRange const BlockRange) const
 {
-	auto const Range = FUnicodeBlockRange::GetUnicodeBlockRange(BlockRange);
+	if (RangeScrollbox.IsValid())
+	{
+		if (!RangeIndices.Contains(BlockRange)) return FReply::Unhandled();
+		auto const Index = RangeIndices[BlockRange];
+		if (!RangeWidgets.IsValidIndex(Index)) return FReply::Unhandled();
+		auto const RangeWidget = RangeWidgets[Index];
+		RangeScrollbox->ScrollDescendantIntoView(RangeWidget);
+		return FReply::Handled();
+	}
+	return FReply::Unhandled();
+}
+
+TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range, uint32 const NumCols) const
+{
 	auto const GridPanel = SNew(SUniformGridPanel)
-		.SlotPadding(FMargin(4.f));
+		.SlotPadding(FMargin(6.f, 4.f));
 
 	auto FilteredRows = Rows.FilterByPredicate(
-		[BlockRange](TSharedPtr<FUnicodeBrowserRow> Row)
+		[Range](TSharedPtr<FUnicodeBrowserRow> Row)
 		{
-			return Row->BlockRange == BlockRange;
+			return Row->BlockRange == Range.Index;
 		}
 	);
 	for (int32 i = 0; i < FilteredRows.Num(); ++i)
@@ -63,18 +84,20 @@ TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(EUnicodeBlockRange Bl
 					return FReply::Handled();
 				}
 			)
-			.Font(FCoreStyle::GetDefaultFontStyle("Regular", 18))
+			.Font_Lambda([this]() { return FontWrapper->Font; })
 			.Justification(ETextJustify::Center)
 			.IsEnabled(true)
+			.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->CharCode, *Row->Character)))
 			.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 		];
 	}
+
 	return SNew(SUbSimpleExpander)
 		.Visibility_Lambda(
-			[BlockRange, RangeSelector]()
+			[Range, this]()
 			{
 				if (!RangeSelector->GetNumCheckboxes()) return EVisibility::Collapsed;
-				return RangeSelector->IsItemChecked(UnicodeBrowser::GetRangeIndex(BlockRange)) ? EVisibility::Visible : EVisibility::Collapsed;
+				return RangeSelector->IsItemChecked(RangeIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed;
 			}
 		)
 		.Header()
@@ -88,36 +111,52 @@ TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(EUnicodeBlockRange Bl
 		];
 }
 
+FReply SUnicodeBrowserWidget::OnOnlySymbolsClicked()
+{
+	RangeSelector->UncheckAll();
+	for (auto const SymbolRange : UnicodeBrowser::GetSymbolRanges())
+	{
+		int32 const Index = RangeIndices[SymbolRange];
+		RangeSelector->SetItemChecked(Index, ECheckBoxState::Checked);
+	}
+	return FReply::Handled();
+}
+
 void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 {
+	if (!FontWrapper)
+	{
+		FontWrapper = NewObject<UUnicodeBrowserFontOptions>();
+		FontWrapper->Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+		FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+		FDetailsViewArgs DetailsViewArgs;
+		DetailsViewArgs.bAllowSearch = false;
+		DetailsViewArgs.bHideSelectionTip = true;
+		DetailsViewArgs.bShowOptions = false;
+		DetailsViewArgs.bShowModifiedPropertiesOption = false;
+		DetailsViewArgs.bShowScrollBar = false;
+		DetailsViewArgs.bShowOptions = false;
+		DetailsViewArgs.bShowObjectLabel = false;
+		DetailsViewArgs.bLockable = false;
+		FontDetailsView = PropertyEditor.CreateDetailView(DetailsViewArgs);
+		FontDetailsView->SetObject(FontWrapper);
+	}
 	if (Rows.Num() == 0)
 	{
+		Ranges = UnicodeBrowser::GetUnicodeBlockRanges();
 		PopulateSupportedCharacters();
 	}
-	auto const NumCols = 32;
-	auto const RangeSelector = MakeRangeSelector();
-	auto const Ranges = FUnicodeBlockRange::GetUnicodeBlockRanges();
-	TArray<TSharedPtr<SWidget>> RangeWidgets;
+	RangeWidgets.Reset();
+	RangeIndices.Reset();
 	RangeWidgets.Reserve(Ranges.Num());
-	for (auto const& Range : Ranges)
-	{
-		if (!Rows.FindByPredicate(
-			[Range](auto Row)
-			{
-				return Row->BlockRange == Range.Index;
-			}
-		))
-		{
-			continue;
-		}
-		auto RangeWidget = MakeRangeWidget(Range.Index, NumCols, RangeSelector);
-		RangeWidgets.Add(RangeWidget);
-	}
-	TSharedPtr<SScrollBox> RangeScrollbox;
+	RangeIndices.Reserve(Ranges.Num());
+	auto const NumCols = 32;
+	RangeSelector = MakeRangeSelector();
 	ChildSlot
 	[
 
 		SNew(SVerticalBox)
+
 		+ SVerticalBox::Slot()
 		.FillHeight(1)
 		.FillContentHeight(1)
@@ -143,11 +182,29 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				]
 			]
 			+ SHorizontalBox::Slot()
-			.MaxWidth(200)
+			.MaxWidth(300)
 			.HAlign(HAlign_Right)
 			[
 
 				SNew(SVerticalBox)
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.VAlign(VAlign_Top)
+				.HAlign(HAlign_Fill)
+				[
+					FontDetailsView.ToSharedRef()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.VAlign(VAlign_Top)
+				.HAlign(HAlign_Fill)
+				[
+					SNew(SButton)
+					.Text(FText::FromString(TEXT("Only Symbols")))
+					.HAlign(HAlign_Center)
+					.VAlign(VAlign_Center)
+					.OnClicked(this, &SUnicodeBrowserWidget::OnOnlySymbolsClicked)
+				]
 				+ SVerticalBox::Slot()
 				.FillHeight(1)
 				.FillContentHeight(1)
@@ -160,20 +217,22 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		]
 	];
 
-	for (auto const& RangeWidget : RangeWidgets)
+	for (auto const& Range : Ranges)
 	{
+		auto RangeWidget = MakeRangeWidget(Range, NumCols);
+		RangeWidgets.Add(RangeWidget);
 		RangeScrollbox->AddSlot()
 		[
 			RangeWidget.ToSharedRef()
 		];
 	}
+	OnOnlySymbolsClicked();
 }
 
 void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 {
-	FSlateFontInfo const FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 12);
+	FSlateFontInfo const FontInfo = FontWrapper->Font;
 	TSharedRef<FSlateFontMeasure> const FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
-	auto const Ranges = FUnicodeBlockRange::GetUnicodeBlockRanges();
 	for (auto const& Range : Ranges)
 	{
 		for (int CharCode = Range.Range.GetLowerBound().GetValue(); CharCode <= Range.Range.GetUpperBound().GetValue(); ++CharCode)
