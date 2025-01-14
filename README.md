@@ -2,6 +2,9 @@
 
 View All Supported Unicode Characters in Unreal Engine Editor.
 
+Ever find the perfect unicode character for your project only to paste it into unreal and get a bunch of � or ￼ ?
+Those times are now over, friend. Find your way with the Unicode Browser plugin.
+
 ![image](https://github.com/user-attachments/assets/ac6a1e00-3b38-4d3a-b607-fa6a8cf62a36)
 
 Open Window via `Window -> Unicode Browser`
@@ -15,6 +18,10 @@ Open Window via `Window -> Unicode Browser`
 * Ability to filter blocks to "only symbols"; preselects blocks known to have useful, supported symbols.
 * Ability to change font
 * **Double-click a character to copy it to the system clipboard**
+
+Pull Requests are very welcome!
+
+**Disclaimer:** Plugin is currently in its infancy and as such leaves much to be desired regarding the user-experience, but it's usable, and useful!
 
 ## Supported Engine Version
 
