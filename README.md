@@ -37,7 +37,7 @@ Pull Requests, Bug reports or Suggestions are very welcome!
 
 ## Supported Engine Version
 
-The plugin was developed for Unreal Engine 5.5.1+, though it should work for all 5.X versions.
+The plugin was developed for Unreal Engine 5.5.1+, though it should work for all 5.x versions.
 
 ## Installation
 
