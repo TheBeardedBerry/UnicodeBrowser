@@ -23,12 +23,13 @@ Open Window via `Window -> Unicode Browser`
 
 ## Features
 
-* Displays a grid of all characters mapped to a named Unicode Block. (See [UnicodeBlockRange.inl](https://github.com/EpicGames/UnrealEngine/blob/585df42eb3a391efd295abd231333df20cddbcf3/Engine/Source/Runtime/SlateCore/Public/Fonts/UnicodeBlockRange.inl) in Editor Source.)
+* Displays a grid of all characters mapped to a named Unicode Block. (See [UnicodeBlockRange.inl](https://github.com/EpicGames/UnrealEngine/blob/585df42eb3a391efd295abd231333df20cddbcf3/Engine/Source/Runtime/SlateCore/Public/Fonts/UnicodeBlockRange.inl) in Editor Source.).
 * Filter displayed characters by Block.
 * Lists all named Unicode Blocks that have mapped characters.
-* Ability to filter blocks to "only symbols"; preselects Blocks known to have useful, supported symbols e.g. Arrows, Box Drawing, Emoji
+* Ability to filter blocks to "only symbols"; preselects Blocks known to have useful, supported symbols e.g. Arrows, Box Drawing, Emoji.
 * Ability to change font.
-* **Double-click a character to copy it to the system clipboard**
+* **Double-click a character to copy it to the system clipboard**.
+* Click a block name to scroll to that block.
 
 Pull Requests are very welcome!
 
@@ -58,7 +59,7 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 
 * Figure out how to successfully read character names from the icu db, currently calling [u_charname](https://github.com/unicode-org/icu/blob/f8aa68b0c1c9584633e7a61157185f1a2c275f58/icu4c/source/common/unames.cpp#L1450) gives me a `u_file_access_error`. Names would be particularly useful for characters which don't display correctly. 
 * Use the character names as a starting point to getting useful search like https://www.compart.com/en/unicode/search?q=cross#characters
-* Block search & filtering (e.g. hide languages by default)
+* Block search & filtering (e.g. hide unchecked languages by default)
 * Resizable sidebar
 * Configurable number of columns (currently fixed at 32 columns)
 * Figure out how to detect �, ￼ et al., so they can be (optionally) filtered out.
