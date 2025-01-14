@@ -61,7 +61,7 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 * Better sidebar filtering (e.g. hide languages by default)
 * Resizable sidebar
 * Configurable number of columns (currently fixed at 32 columns)
-* Figure out how to detect � et al, so they can be (optionally) filtered out.
+* Figure out how to detect �, ￼ et al., so they can be (optionally) filtered out.
 * Persist window state
 * Improve initial load time
 * Your suggestions?
