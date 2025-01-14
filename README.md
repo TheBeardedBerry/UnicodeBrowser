@@ -8,7 +8,7 @@ Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 > 
 > Those times are now over, friend.
 > 
-> Shine light unto the darkness, find your way with the 🪄 **Unicode Browser Plugin** 🪄
+> Shine light unto darkness, find your way with the 🪄 **Unicode Browser Plugin** 🪄
 
 <div align="center">
 <img src="https://github.com/user-attachments/assets/2756db67-f446-49aa-94a0-2428e9c34221" alt="Screenshot 1" width="1000px">
