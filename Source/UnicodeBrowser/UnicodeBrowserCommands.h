@@ -9,7 +9,7 @@ class FUnicodeBrowserCommands : public TCommands<FUnicodeBrowserCommands>
 {
 public:
 	FUnicodeBrowserCommands()
-		: TCommands<FUnicodeBrowserCommands>(TEXT("UnicodeBrowser"), NSLOCTEXT("Contexts", "UnicodeBrowser", "UnicodeBrowser Plugin"), NAME_None, FUnicodeBrowserStyle::GetStyleSetName()) {}
+		: TCommands<FUnicodeBrowserCommands>(TEXT("UnicodeBrowser"), NSLOCTEXT("Contexts", "UnicodeBrowser", "� Unicode Browser"), NAME_None, FUnicodeBrowserStyle::GetStyleSetName()) {}
 
 	// TCommands<> interface
 	virtual void RegisterCommands() override;

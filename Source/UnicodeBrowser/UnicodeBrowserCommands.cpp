@@ -6,7 +6,7 @@
 
 void FUnicodeBrowserCommands::RegisterCommands()
 {
-	UI_COMMAND(OpenPluginWindow, "UnicodeBrowser", "Bring up UnicodeBrowser window", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(OpenPluginWindow, "Unicode Browser", "Bring up � Unicode Browser window", EUserInterfaceActionType::Button, FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE

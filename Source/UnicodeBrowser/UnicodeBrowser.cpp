@@ -8,18 +8,14 @@
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "Widgets/Docking/SDockTab.h"
-#include "Widgets/Layout/SBox.h"
-#include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/SListView.h"
 #include "ToolMenus.h"
 
 #include "Engine/Font.h"
 
-#include "Fonts/FontMeasure.h"
-
 #include "Framework/Application/SlateApplication.h"
 
-static const FName UnicodeBrowserTabName("UnicodeBrowser");
+static const FName UnicodeBrowserTabName("� Unicode Browser");
 
 #define LOCTEXT_NAMESPACE "FUnicodeBrowserModule"
 
@@ -42,7 +38,7 @@ void FUnicodeBrowserModule::StartupModule()
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FUnicodeBrowserModule::RegisterMenus));
 	
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(UnicodeBrowserTabName, FOnSpawnTab::CreateRaw(this, &FUnicodeBrowserModule::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("FUnicodeBrowserTabTitle", "UnicodeBrowser"))
+		.SetDisplayName(LOCTEXT("FUnicodeBrowserTabTitle", "� Unicode Browser"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
@@ -65,12 +61,6 @@ void FUnicodeBrowserModule::ShutdownModule()
 
 TSharedRef<SDockTab> FUnicodeBrowserModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	FText WidgetText = FText::Format(
-		LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
-		FText::FromString(TEXT("FUnicodeBrowserModule::OnSpawnPluginTab")),
-		FText::FromString(TEXT("UnicodeBrowser.cpp"))
-		);
-
 	return SNew(SDockTab)
 		.TabRole(ETabRole::MajorTab)
 		[

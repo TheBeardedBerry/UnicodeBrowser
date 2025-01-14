@@ -132,7 +132,6 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		FDetailsViewArgs DetailsViewArgs;
 		DetailsViewArgs.bAllowSearch = false;
 		DetailsViewArgs.bHideSelectionTip = true;
-		DetailsViewArgs.bShowOptions = false;
 		DetailsViewArgs.bShowModifiedPropertiesOption = false;
 		DetailsViewArgs.bShowScrollBar = false;
 		DetailsViewArgs.bShowOptions = false;
@@ -156,7 +155,6 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	[
 
 		SNew(SVerticalBox)
-
 		+ SVerticalBox::Slot()
 		.FillHeight(1)
 		.FillContentHeight(1)
