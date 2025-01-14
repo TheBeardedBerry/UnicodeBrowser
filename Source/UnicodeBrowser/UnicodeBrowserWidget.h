@@ -9,7 +9,7 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SListView.h"
 
-
+class SUniformGridPanel;
 THIRD_PARTY_INCLUDES_START
 // Include ICU headers
 #include <unicode/uchar.h>
@@ -103,12 +103,17 @@ public:
 };
 
 UCLASS(Hidden, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "Font Options")
-class UNICODEBROWSER_API UUnicodeBrowserFontOptions : public UObject
+class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject
 {
 	GENERATED_BODY()
 public:
+
+	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
 	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient)
 	FSlateFontInfo Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+
+	UPROPERTY(EditAnywhere)
+	int32 NumCols = 32;
 
 	virtual void PostInitProperties() override
 	{
@@ -121,11 +126,20 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override
 	{
 		Super::PostEditChangeProperty(PropertyChangedEvent);
+		if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UUnicodeBrowserOptions, NumCols))
+		{
+			// ReSharper disable once CppExpressionWithoutSideEffects
+			OnNumColsChanged.Broadcast();
+		}
+
 		if (!Font.HasValidFont())
 		{
 			Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 		}
 	}
+
+	DECLARE_MULTICAST_DELEGATE(FOnNumColsChangedDelegate);
+	FOnNumColsChangedDelegate OnNumColsChanged;
 	
 };
 /**
@@ -145,9 +159,10 @@ public:
 	TMap<EUnicodeBlockRange const, int32 const> RangeIndices;
 	TArrayView<FUnicodeBlockRange const> Ranges;
 	TSharedPtr<class IDetailsView> FontDetailsView;
+	mutable TMap<int32, TSharedRef<STextBlock>> RowWidgetTextCache;
 
-private:
-	TSharedPtr<SWidget> MakeRangeWidget(FUnicodeBlockRange BlockRange, uint32 NumCols) const;
+protected:
+	TSharedPtr<SWidget> MakeRangeWidget(FUnicodeBlockRange Range) const;
 	TSharedPtr<SUbCheckBoxList> MakeRangeSelector();
 	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
 	TSharedPtr<SScrollBox> RangeScrollbox;
@@ -155,5 +170,8 @@ private:
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
 	void PopulateSupportedCharacters();
 	FString GetUnicodeCharacterName(int32 CharCode);
-	TObjectPtr<UUnicodeBrowserFontOptions> FontWrapper;
+	TObjectPtr<UUnicodeBrowserOptions> Options;
+	FReply OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const;
+	FSlateFontInfo GetFont() const;
+	void RebuildGridColumns(::FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const; 
 };

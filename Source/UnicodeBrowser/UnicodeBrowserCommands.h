@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "Framework/Commands/Commands.h"
 #include "UnicodeBrowserStyle.h"
+
+#include "Framework/Commands/Commands.h"
 
 class FUnicodeBrowserCommands : public TCommands<FUnicodeBrowserCommands>
 {

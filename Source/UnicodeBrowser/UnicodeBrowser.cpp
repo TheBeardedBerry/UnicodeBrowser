@@ -1,19 +1,18 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UnicodeBrowser.h"
-#include "UnicodeBrowserStyle.h"
-#include "UnicodeBrowserCommands.h"
+
 #include "LevelEditor.h"
+#include "ToolMenus.h"
+#include "UnicodeBrowserCommands.h"
+#include "UnicodeBrowserStyle.h"
+
+#include "Framework/Application/SlateApplication.h"
 
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Views/SListView.h"
-#include "ToolMenus.h"
-
-#include "Engine/Font.h"
-
-#include "Framework/Application/SlateApplication.h"
 
 static const FName UnicodeBrowserTabName("� Unicode Browser");
 

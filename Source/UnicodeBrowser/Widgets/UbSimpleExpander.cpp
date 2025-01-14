@@ -48,7 +48,9 @@ void SUbSimpleExpander::Construct(const FArguments& InArgs)
 					]
 					+ SHorizontalBox::Slot()
 					[
-						InArgs._Header.Widget
+						InArgs
+						._Header
+						.Widget
 					]
 				]
 			]
@@ -59,7 +61,9 @@ void SUbSimpleExpander::Construct(const FArguments& InArgs)
 			SNew(SBox)
 			.Visibility(this, &SUbSimpleExpander::GetBodyVisibility)
 			[
-				InArgs._Body.Widget
+				InArgs
+				._Body
+				.Widget
 			]
 		]
 	];
@@ -67,7 +71,7 @@ void SUbSimpleExpander::Construct(const FArguments& InArgs)
 
 FReply SUbSimpleExpander::ExpandButtonClicked()
 {
-	bIsExpanded = bIsExpanded.IsBound() ? bIsExpanded.Get() : !bIsExpanded.Get();// if bound, let the expansion be handled by the bound delegate
+	bIsExpanded = bIsExpanded.IsBound() ? bIsExpanded.Get() : !bIsExpanded.Get(); // if bound, let the expansion be handled by the bound delegate
 	if (bIsExpanded.IsBound())
 	{
 		// ReSharper disable once CppExpressionWithoutSideEffects
@@ -79,8 +83,8 @@ FReply SUbSimpleExpander::ExpandButtonClicked()
 FSlateColor SUbSimpleExpander::GetBackgroundColor() const
 {
 	return IsHovered()
-		       ? FAppStyle::Get().GetSlateColor("Colors.Header")
-		       : FAppStyle::Get().GetSlateColor("Colors.Panel");
+		? FAppStyle::Get().GetSlateColor("Colors.Header")
+		: FAppStyle::Get().GetSlateColor("Colors.Panel");
 }
 
 const FSlateBrush* SUbSimpleExpander::GetExpandButtonImage() const
@@ -90,13 +94,12 @@ const FSlateBrush* SUbSimpleExpander::GetExpandButtonImage() const
 
 EVisibility SUbSimpleExpander::GetBodyVisibility() const
 {
-	return  bIsExpanded.Get() ? EVisibility::Visible : EVisibility::Collapsed;
+	return bIsExpanded.Get() ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 EVisibility SUbSimpleExpander::GetExpandButtonVisibility() const
 {
 	return ShowExpandButton.Get() ? EVisibility::Visible : EVisibility::Collapsed;
 }
-
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

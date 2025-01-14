@@ -1,11 +1,15 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UnicodeBrowserStyle.h"
-#include "Styling/SlateStyleRegistry.h"
+
 #include "Framework/Application/SlateApplication.h"
-#include "Slate/SlateGameResources.h"
+
 #include "Interfaces/IPluginManager.h"
+
+#include "Slate/SlateGameResources.h"
+
 #include "Styling/SlateStyleMacros.h"
+#include "Styling/SlateStyleRegistry.h"
 
 #define RootToContentDir Style->RootToContentDir
 
