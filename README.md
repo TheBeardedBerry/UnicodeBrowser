@@ -11,10 +11,9 @@ Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 > Shine light unto the darkness, find your way with the 🪄 **Unicode Browser Plugin** 🪄
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/ac6a1e00-3b38-4d3a-b607-fa6a8cf62a36" alt="Screenshot 1" width="1000px">
-<img src="https://github.com/user-attachments/assets/6e5ccb9e-e4b6-4a8f-87b8-dfd163a55291" alt="Screenshot 2" width="320px">
-<img src="https://github.com/user-attachments/assets/048f77a6-9d9a-4471-981e-3102d21099b8" alt="Screenshot 2" width="320px">
-
+<img src="https://github.com/user-attachments/assets/2756db67-f446-49aa-94a0-2428e9c34221" alt="Screenshot 1" width="1000px">
+<img src="https://github.com/user-attachments/assets/cc084018-7793-44b9-94ea-7b537e4c4804" alt="Screenshot 2" width="320px">
+<img src="https://github.com/user-attachments/assets/a7ffc954-644f-4108-ae30-cdc5491adee1" alt="Screenshot 2" width="320px">
 </div>
 
 # How to Use
@@ -61,7 +60,6 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 * Use the character names as a starting point to getting useful search like https://www.compart.com/en/unicode/search?q=cross#characters
 * Block search & filtering (e.g. hide unchecked languages by default)
 * Resizable sidebar
-* Configurable number of columns (currently fixed at 32 columns)
 * Figure out how to detect �, ￼ et al., so they can be (optionally) filtered out.
 * Persist window state
 * Improve initial load time
