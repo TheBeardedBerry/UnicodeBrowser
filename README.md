@@ -1,4 +1,4 @@
-# 🪄 Unicode Browser 🪄 for Unreal Engine
+# � Unicode Browser for Unreal Engine
 
 Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 
