@@ -14,12 +14,12 @@ Open Window via `Window -> Unicode Browser`
 
 ## Features
 
-* Lists all characters mapped to a named Unicode block
-* Lists all Unicode Blocks
-* Displays grid of every character in each block
-* Filter displayed characters by block
-* Ability to filter blocks to "only symbols"; preselects blocks known to have useful, supported symbols.
-* Ability to change font
+* Lists all characters mapped to a named Unicode Block.
+* Lists all named Unicode Blocks.
+* Displays grid of every character in each Block.
+* Filter displayed characters by Block
+* Ability to filter blocks to "only symbols"; preselects Blocks known to have useful, supported symbols.
+* Ability to change font.
 * **Double-click a character to copy it to the system clipboard**
 
 Pull Requests are very welcome!
