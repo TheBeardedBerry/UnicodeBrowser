@@ -31,10 +31,10 @@ Open Window via `Window -> Unicode Browser`
 * **Double-click a character to copy it to the system clipboard**.
 * Click a block name to scroll to that block.
 
-Pull Requests are very welcome!
-
 > [!WARNING]
 > **Disclaimer:** Plugin is currently in its infancy and as such leaves much to be desired regarding the user-experience, but it's usable, and useful!
+
+Pull Requests, Bug reports or Suggestions are very welcome!
 
 ## Supported Engine Version
 
