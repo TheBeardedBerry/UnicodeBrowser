@@ -56,7 +56,7 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 
 ## TODO & Known Issues
 
-* Figure out how to successfully read character names from the icu db, currently calling [u_charname](https://github.com/unicode-org/icu/blob/f8aa68b0c1c9584633e7a61157185f1a2c275f58/icu4c/source/common/unames.cpp#L1450) gives me a `u_file_access_error`. Names would be particularly useful for characters which don't display correctly. 
+* Figure out how to successfully read character names from the icu db e.g. ⚔ -> "Crossed Swords". Currently calling [u_charname](https://github.com/unicode-org/icu/blob/f8aa68b0c1c9584633e7a61157185f1a2c275f58/icu4c/source/common/unames.cpp#L1450) gives me a `u_file_access_error`. Names would be particularly useful for characters which don't display correctly. 
 * Use the character names as a starting point to getting useful search like https://www.compart.com/en/unicode/search?q=cross#characters
 * Block search & filtering (e.g. hide unchecked languages by default)
 * Resizable sidebar
