@@ -1,4 +1,4 @@
-# Unicode Browser for Unreal Engine
+# 🪄 Unicode Browser 🪄 for Unreal Engine
 
 Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 
@@ -6,7 +6,7 @@ Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 > [!TIP]
 > Ever find the *perfect* unicode character for your Unreal editor tooling, only to paste it into Unreal and see a bunch of ��� or ￼￼￼ ?
 > 
-> Those times are now over friend.
+> Those times are now over, friend.
 > 
 > Shine light unto the darkness, find your way with the 🪄 **Unicode Browser Plugin** 🪄
 
