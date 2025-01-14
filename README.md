@@ -30,18 +30,6 @@ Pull Requests are very welcome!
 > [!WARNING]
 > **Disclaimer:** Plugin is currently in its infancy and as such leaves much to be desired regarding the user-experience, but it's usable, and useful!
 
-## TODO
-
-* Figure out how to successfully read character names from the icu db, currently calling [u_charname](https://github.com/unicode-org/icu/blob/f8aa68b0c1c9584633e7a61157185f1a2c275f58/icu4c/source/common/unames.cpp#L1450) gives me a `u_file_access_error`.
-* Use the character names as a starting point to getting useful search like https://www.compart.com/en/unicode/search?q=cross#characters
-* Better sidebar filtering (e.g. hide languages by default)
-* Resizable sidebar
-* Configurable number of columns (currently fixed at 32 columns)
-* Figure out how to detect � et al, so they can be (optionally) filtered out.
-* Persist window state
-* Improve initial load time
-* Your suggestions?
-
 ## Supported Engine Version
 
 The plugin was developed for Unreal Engine 5.5.1+, though it should work for all 5.X versions.
@@ -60,6 +48,18 @@ git commit -m "Added UnicodeBrowser Plugin as a submodule."
 ```
 
 Alternatively you can download a ZIP of this repo and place it in `YourProject/Plugins/`.
+
+## TODO & Known Issues
+
+* Figure out how to successfully read character names from the icu db, currently calling [u_charname](https://github.com/unicode-org/icu/blob/f8aa68b0c1c9584633e7a61157185f1a2c275f58/icu4c/source/common/unames.cpp#L1450) gives me a `u_file_access_error`.
+* Use the character names as a starting point to getting useful search like https://www.compart.com/en/unicode/search?q=cross#characters
+* Better sidebar filtering (e.g. hide languages by default)
+* Resizable sidebar
+* Configurable number of columns (currently fixed at 32 columns)
+* Figure out how to detect � et al, so they can be (optionally) filtered out.
+* Persist window state
+* Improve initial load time
+* Your suggestions?
 
 # License
 
