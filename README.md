@@ -42,7 +42,7 @@ The plugin was developed for Unreal Engine 5.5.1+, though it should work for all
 ## Installation
 
 The best way is to clone this repository as a submodule; that way you can contribute
-pull requests if you want and more importantly, easily get latest updates.
+pull requests and more importantly, easily get latest updates.
  
 The project should be placed in your project's `Plugins` folder.
 
