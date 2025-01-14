@@ -2,8 +2,11 @@
 
 View All Supported Unicode Characters in Unreal Engine Editor.
 
-Ever find the perfect unicode character for your project only to paste it into unreal and get a bunch of � or ￼ ?
-Those times are now over, friend. Find your way with the Unicode Browser plugin.
+Ever find the *perfect* unicode character for your Unreal editor tooling, only to paste it into Unreal and get a bunch of ��� or ￼￼￼ ?
+
+Those times are now over friend.
+
+Shine a light into the darkness and find your way with the 🪄 **Unicode Browser Plugin**
 
 ![image](https://github.com/user-attachments/assets/ac6a1e00-3b38-4d3a-b607-fa6a8cf62a36)
 
