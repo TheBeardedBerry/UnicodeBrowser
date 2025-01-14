@@ -14,7 +14,7 @@ Open Window via `Window -> Unicode Browser`
 
 ## Features
 
-* Displays a grid of all characters mapped to a named Unicode Block.
+* Displays a grid of all characters mapped to a named Unicode Block. (See [UnicodeBlockRange.inl](https://github.com/EpicGames/UnrealEngine/blob/585df42eb3a391efd295abd231333df20cddbcf3/Engine/Source/Runtime/SlateCore/Public/Fonts/UnicodeBlockRange.inl) in Editor Source.)
 * Filter displayed characters by Block.
 * Lists all named Unicode Blocks that have mapped characters.
 * Ability to filter blocks to "only symbols"; preselects Blocks known to have useful, supported symbols e.g. Arrows, Box Drawing, Emoji
