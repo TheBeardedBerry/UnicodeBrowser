@@ -40,12 +40,10 @@ The project should be placed in your project's `Plugins` folder.
 ```bash
 cd YourProject
 git submodule add git@github.com:ntystudio/UnicodeBrowser.git Plugins/UnicodeBrowser
-git submodule init
-git submodule update
 git commit -m "Added UnicodeBrowser Plugin as a submodule."
 ```
 
-Alternatively you can download the ZIP of this repo and place it in `YourProject/Plugins/`.
+Alternatively you can download a ZIP of this repo and place it in `YourProject/Plugins/`.
 
 # License
 
