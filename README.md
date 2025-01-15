@@ -68,3 +68,10 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 # License
 
 MIT
+
+----
+
+# Other NTY Studio Plugins
+
+* [Extended State Tree](https://github.com/ntystudio/ExtendedStateTree)
+* [Reference Visualizer](https://github.com/ntystudio/CTRL-reference-visualizer)
