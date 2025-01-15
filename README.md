@@ -10,13 +10,12 @@ Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 > 
 > Shine light unto darkness, find your way with the 🪄 **Unicode Browser Plugin** 🪄
 
-<div align="center">
-<img src="https://github.com/user-attachments/assets/2756db67-f446-49aa-94a0-2428e9c34221" alt="Screenshot 1" width="1000px">
-<img src="https://github.com/user-attachments/assets/cc084018-7793-44b9-94ea-7b537e4c4804" alt="Screenshot 2" width="320px">
-<img src="https://github.com/user-attachments/assets/a7ffc954-644f-4108-ae30-cdc5491adee1" alt="Screenshot 2" width="320px">
-</div>
-
 ----
+<div align="center">
+<img src="https://github.com/user-attachments/assets/17bd8ab6-10c8-46ce-ad19-eef32308053e" alt="Screenshot 1" width="1000px">
+<img src="https://github.com/user-attachments/assets/3bbc99cf-5e2a-4cdd-86a9-6e12c9749643" alt="Screenshot 2" width="320px">
+<img src="https://github.com/user-attachments/assets/13b90037-aa18-4a27-8dbb-ab5f6033d14a" alt="Screenshot 2" width="320px">
+</div>
 
 # How to Use
 
