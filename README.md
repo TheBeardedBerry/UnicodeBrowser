@@ -16,6 +16,8 @@ Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 <img src="https://github.com/user-attachments/assets/a7ffc954-644f-4108-ae30-cdc5491adee1" alt="Screenshot 2" width="320px">
 </div>
 
+----
+
 # How to Use
 
 Open Window via `Window -> Unicode Browser`
@@ -71,7 +73,9 @@ MIT
 
 ----
 
-# Other NTY Studio Plugins
-
-* [Extended State Tree](https://github.com/ntystudio/ExtendedStateTree)
-* [Reference Visualizer](https://github.com/ntystudio/CTRL-reference-visualizer)
+> [!Tip] 
+> # NTY Studio Plugins
+>
+> * [� Unicode Browser](https://github.com/ntystudio/UnicodeBrowser)
+> * [Extended State Tree](https://github.com/ntystudio/ExtendedStateTree)
+> * [Reference Visualizer](https://github.com/ntystudio/CTRL-reference-visualizer)
