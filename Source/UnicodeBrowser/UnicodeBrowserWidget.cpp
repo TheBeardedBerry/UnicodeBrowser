@@ -149,7 +149,7 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 	if (CurrentRow == Row) return FReply::Handled();
 	CurrentRow = Row;
 	CurrentCharacterView->SetText(FText::FromString(CurrentRow->Character));
-	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
+	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
 	return FReply::Handled();
 }
 
@@ -199,7 +199,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
 					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-0p6.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 				];
 
@@ -230,7 +230,7 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 			.Text_Lambda(
 				[this]()
 				{
-					return FText::FromString(FString::Printf(TEXT("Codepoint: U+%04X (%d)"), Row.Get()->Codepoint, Row.Get()->Codepoint));
+					return FText::FromString(FString::Printf(TEXT("Codepoint: U+%-06.04X (%d)"), Row.Get()->Codepoint, Row.Get()->Codepoint));
 				}
 			)
 		]
@@ -472,7 +472,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 						.Font(this, &SUnicodeBrowserWidget::GetFont)
 						.Justification(ETextJustify::Center)
 						.IsEnabled(true)
-						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
+						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
 						.Text(FText::FromString(FString::Printf(TEXT("%s"), *CurrentRow->Character)))
 					]
 				]
