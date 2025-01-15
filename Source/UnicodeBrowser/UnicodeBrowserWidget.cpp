@@ -64,6 +64,16 @@ TArrayView<FUnicodeBlockRange const> UnicodeBrowser::GetUnicodeBlockRanges()
 	return BlockRange;
 }
 
+int32 UnicodeBrowser::GetRangeIndex(EUnicodeBlockRange BlockRange)
+{
+	return GetUnicodeBlockRanges().IndexOfByPredicate(
+		[BlockRange](FUnicodeBlockRange const& Range)
+		{
+			return Range.Index == BlockRange;
+		}
+	);
+}
+
 TArray<EUnicodeBlockRange> UnicodeBrowser::GetSymbolRanges()
 {
 	TArray<EUnicodeBlockRange> SymbolRanges;
@@ -591,10 +601,6 @@ FString SUnicodeBrowserWidget::GetUnicodeCharacterName(int32 const CharCode)
 {
 	UChar32 const uChar = static_cast<UChar32>(CharCode);
 	UErrorCode errorCode = U_ZERO_ERROR;
-	// uint32 bufferSize = 256;
-	// char *name= (char *)uprv_malloc(bufferSize*sizeof(char));
-	// (char *)uprv_malloc(bufferSize*sizeof(char));
-	// char name[256];
 	char* name = new char[256];
 
 	// Get the Unicode character name using ICU

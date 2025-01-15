@@ -19,19 +19,11 @@ class SUniformGridPanel;
 
 namespace UnicodeBrowser
 {
-	inline TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
+	TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
 
-	inline TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
+	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 
-	inline int32 GetRangeIndex(EUnicodeBlockRange BlockRange)
-	{
-		return GetUnicodeBlockRanges().IndexOfByPredicate(
-			[BlockRange](FUnicodeBlockRange const& Range)
-			{
-				return Range.Index == BlockRange;
-			}
-		);
-	}
+	int32 GetRangeIndex(EUnicodeBlockRange BlockRange);
 
 	static TArray<EUnicodeBlockRange> GetSymbolRanges();
 }
