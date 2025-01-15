@@ -17,11 +17,15 @@
 
 #include "HAL/PlatformApplicationMisc.h"
 
-#include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
-#include "UnicodeBrowser/Widgets/UbSimpleExpander.h"
+#include "Modules/ModuleManager.h"
 
+#include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
+
+#include "Widgets/SInvalidationPanel.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SGridPanel.h"
+#include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
 #include "Widgets/Text/STextBlock.h"
@@ -49,10 +53,12 @@ TOptional<EUnicodeBlockRange> UnicodeBrowser::GetUnicodeBlockRangeFromChar(int32
 TArrayView<FUnicodeBlockRange const> UnicodeBrowser::GetUnicodeBlockRanges()
 {
 	auto BlockRange = FUnicodeBlockRange::GetUnicodeBlockRanges();
-	BlockRange.StableSort([](FUnicodeBlockRange const& A, FUnicodeBlockRange const& B)
-	{
-		return A.DisplayName.CompareTo(B.DisplayName) < 0;
-	});
+	BlockRange.StableSort(
+		[](FUnicodeBlockRange const& A, FUnicodeBlockRange const& B)
+		{
+			return A.DisplayName.CompareTo(B.DisplayName) < 0;
+		}
+	);
 	return BlockRange;
 }
 
@@ -116,6 +122,20 @@ FReply SUnicodeBrowserWidget::OnRangeClicked(EUnicodeBlockRange const BlockRange
 	return FReply::Unhandled();
 }
 
+FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const
+{
+	if (CurrentRow == Row) return FReply::Handled();
+	CurrentRow = Row;
+	CurrentCharacterView->SetText(FText::FromString(CurrentRow->Character));
+	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->CharCode, *CurrentRow->Character)));
+	return FReply::Handled();
+}
+
+FReply SUnicodeBrowserWidget::OnCurrentCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent) const
+{
+	return OnCharacterClicked(Geometry, PointerEvent, CurrentRow->Character);
+}
+
 FReply SUnicodeBrowserWidget::OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const
 {
 	FPlatformApplicationMisc::ClipboardCopy(*Character);
@@ -130,6 +150,7 @@ FSlateFontInfo SUnicodeBrowserWidget::GetFont() const
 
 void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, TSharedRef<SUniformGridPanel> const GridPanel) const
 {
+	GridPanel->ClearChildren();
 	auto const NumCols = Options->NumCols;
 	auto FilteredRows = Rows.FilterByPredicate(
 		[Range](TSharedPtr<FUnicodeBrowserRow> const& Row)
@@ -143,23 +164,30 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 	{
 		auto const Row = FilteredRows[i];
 		auto Slot = GridPanel->AddSlot(i % NumCols, i / NumCols);
-		TSharedPtr<STextBlock> TextBlock;
+		TSharedPtr<SBorder> TextBlock;
 		if (!RowWidgetTextCache.Contains(Row->CharCode))
 		{
-			TextBlock = SNew(STextBlock)
-			.Visibility(EVisibility::Visible)
-			.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
-			.Font(this, &SUnicodeBrowserWidget::GetFont)
-			.Justification(ETextJustify::Center)
-			.IsEnabled(true)
-			.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->CharCode, *Row->Character)))
-			.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)));
+			TextBlock = SNew(SBorder)
+				.BorderImage(nullptr)
+				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row)
+				[
+					SNew(STextBlock)
+					.Visibility(EVisibility::Visible)
+					.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
+					.Font(this, &SUnicodeBrowserWidget::GetFont)
+					.Justification(ETextJustify::Center)
+					.IsEnabled(true)
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->CharCode, *Row->Character)))
+					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
+				];
+
 			RowWidgetTextCache.Add(Row->CharCode, TextBlock.ToSharedRef());
-		} else
+		}
+		else
 		{
 			TextBlock = RowWidgetTextCache[Row->CharCode];
 		}
-		
+
 		Slot
 		[
 			TextBlock.ToSharedRef()
@@ -171,17 +199,17 @@ TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange co
 {
 	auto const GridPanel = SNew(SUniformGridPanel)
 		.SlotPadding(FMargin(6.f, 4.f));
-	Options->OnNumColsChanged.AddSPLambda(GridPanel.ToSharedPtr().Get(),
+	Options->OnNumColsChanged.AddSPLambda(
+		GridPanel.ToSharedPtr().Get(),
 		[GridPanel, Range, this]()
 		{
-			GridPanel->ClearChildren();
 			RebuildGridColumns(Range, GridPanel);
 		}
 	);
 
 	RebuildGridColumns(Range, GridPanel);
 
-	return SNew(SUbSimpleExpander)
+	return SNew(SExpandableArea)
 		.Visibility_Lambda(
 			[RangeIndex = Range.Index, this]()
 			{
@@ -189,14 +217,21 @@ TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange co
 				return RangeSelector->IsItemChecked(RangeIndices[RangeIndex]) ? EVisibility::Visible : EVisibility::Collapsed;
 			}
 		)
-		.Header()
+		.HeaderPadding(FMargin(2, 4))
+		.HeaderContent()
 		[
 			SNew(STextBlock)
 			.Text(Range.DisplayName)
 		]
-		.Body()
+		.BodyContent()
 		[
-			GridPanel
+			SNew(SScaleBox)
+			.Stretch(EStretch::ScaleToFit)
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				GridPanel
+			]
 		];
 }
 
@@ -270,6 +305,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		RangeIndices.Reserve(Ranges.Num());
 	}
 	RangeSelector = MakeRangeSelector();
+	CurrentRow = Rows.Num() > 0 ? Rows[0] : nullptr;
 	ChildSlot
 	[
 
@@ -280,13 +316,12 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		.VAlign(VAlign_Fill)
 		.HAlign(HAlign_Fill)
 		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-			.FillWidth(1)
-			.FillContentWidth(1)
-			.MinWidth(500)
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
+			SNew(SSplitter)
+			.Orientation(Orient_Horizontal)
+			.ResizeMode(ESplitterResizeMode::Fill)
+			+ SSplitter::Slot()
+			.SizeRule(SSplitter::FractionOfParent)
+			.Value(0.7)
 			[
 				SNew(SVerticalBox)
 				+ SVerticalBox::Slot()
@@ -298,37 +333,98 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 					SAssignNew(RangeScrollbox, SScrollBox)
 				]
 			]
-			+ SHorizontalBox::Slot()
-			.MaxWidth(300)
-			.HAlign(HAlign_Right)
+			+ SSplitter::Slot()
+			.SizeRule(SSplitter::FractionOfParent)
+			.Value(0.3)
 			[
 
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.VAlign(VAlign_Top)
-				.HAlign(HAlign_Fill)
+				SNew(SSplitter)
+				.Orientation(Orient_Vertical)
+				.ResizeMode(ESplitterResizeMode::Fill)
+				+ SSplitter::Slot()
+				.SizeRule(SSplitter::FractionOfParent)
+				.Value(0.25)
+				.MinSize(50)
 				[
-					FontDetailsView.ToSharedRef()
+					SNew(SScaleBox)
+					.Stretch(EStretch::ScaleToFit)
+					[
+						SAssignNew(CurrentCharacterView, STextBlock)
+						.Visibility(EVisibility::Visible)
+						.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCurrentCharacterClicked)
+						.Font(this, &SUnicodeBrowserWidget::GetFont)
+						.Justification(ETextJustify::Center)
+						.IsEnabled(true)
+						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->CharCode, *CurrentRow->Character)))
+						.Text(FText::FromString(FString::Printf(TEXT("%s"), *CurrentRow->Character)))
+					]
+
 				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.VAlign(VAlign_Top)
-				.HAlign(HAlign_Fill)
+				+ SSplitter::Slot()
+				.SizeRule(SSplitter::FractionOfParent)
+				.Value(0.75)
 				[
-					SNew(SButton)
-					.Text(FText::FromString(TEXT("Only Symbols")))
-					.HAlign(HAlign_Center)
-					.VAlign(VAlign_Center)
-					.OnClicked(this, &SUnicodeBrowserWidget::OnOnlySymbolsClicked)
-				]
-				+ SVerticalBox::Slot()
-				.FillHeight(1)
-				.FillContentHeight(1)
-				.VAlign(VAlign_Fill)
-				.HAlign(HAlign_Fill)
-				[
-					RangeSelector.ToSharedRef()
+
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.VAlign(VAlign_Top)
+					.HAlign(HAlign_Fill)
+					[
+						FontDetailsView.ToSharedRef()
+					]
+					+ SVerticalBox::Slot()
+					.FillHeight(1)
+					.FillContentHeight(1)
+					.VAlign(VAlign_Fill)
+					.HAlign(HAlign_Fill)
+					[
+
+						SNew(SExpandableArea)
+						.HeaderPadding(FMargin(2, 4))
+						.HeaderContent()
+						[
+							SNew(STextBlock)
+							.Font(FAppStyle::Get().GetFontStyle("DetailsView.CategoryFontStyle"))
+							.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+							.Text(FText::FromString(TEXT("Unicode Block Ranges")))
+						]
+						.BodyContent()
+						[
+							SNew(SVerticalBox)
+							+ SVerticalBox::Slot()
+							.AutoHeight()
+							.VAlign(VAlign_Center)
+							.Padding(0, 4)
+							.HAlign(HAlign_Center)
+							[
+								SNew(SButton)
+								.Text(FText::FromString(TEXT("Preset: Only Symbol Blocks")))
+								.HAlign(HAlign_Center)
+								.VAlign(VAlign_Center)
+								.OnClicked(this, &SUnicodeBrowserWidget::OnOnlySymbolsClicked)
+							]
+							+ SVerticalBox::Slot()
+							.FillHeight(1)
+							.FillContentHeight(1)
+							.VAlign(VAlign_Fill)
+							.HAlign(HAlign_Fill)
+							[
+								SNew(SScrollBox)
+								.Orientation(Orient_Vertical)
+								+ SScrollBox::Slot()
+								.FillSize(1.f)
+								[
+									SNew(SVerticalBox)
+									+ SVerticalBox::Slot()
+									.AutoHeight()
+									[
+										RangeSelector.ToSharedRef()
+									]
+								]
+							]
+						]
+					]
 				]
 			]
 		]

@@ -109,6 +109,7 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 
 	TSharedRef<SHeaderRow> const HeaderRowWidget = SNew(SHeaderRow)
 		+ SHeaderRow::Column(UbCheckBoxList::ColumnID_CheckBox)
+		.FixedWidth(UbCheckBoxList::CheckBoxColumnWidth)
 		[
 			SNew(SCheckBox)
 			.Style(InArgs._CheckBoxStyle)
@@ -116,7 +117,6 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 			.OnCheckStateChanged(this, &SUbCheckBoxList::OnToggleSelectedCheckBox)
 			.Visibility_Lambda([bShowHeaderCheckbox] { return bShowHeaderCheckbox ? EVisibility::Visible : EVisibility::Hidden; })
 		]
-		.FixedWidth(UbCheckBoxList::CheckBoxColumnWidth)
 		+ SHeaderRow::Column(UbCheckBoxList::ColumnID_Item)
 		.DefaultLabel(InArgs._ItemHeaderLabel)
 		.FillWidth(1.0f);
@@ -128,6 +128,7 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 		.OnGenerateRow(this, &SUbCheckBoxList::HandleGenerateRow)
 		.HeaderRow(HeaderRowWidget)
 		.SelectionMode(ESelectionMode::None)
+		.OnItemsRebuilt(this, &SUbCheckBoxList::UpdateAllChecked)
 	];
 }
 
