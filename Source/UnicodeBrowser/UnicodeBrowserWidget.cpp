@@ -149,7 +149,7 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 	if (CurrentRow == Row) return FReply::Handled();
 	CurrentRow = Row;
 	CurrentCharacterView->SetText(FText::FromString(CurrentRow->Character));
-	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
+	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
 	return FReply::Handled();
 }
 
@@ -199,7 +199,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
 					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 				];
 
@@ -226,36 +226,29 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
+			.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
 			.Text_Lambda(
 				[this]()
 				{
-					return FText::FromString(FString::Printf(TEXT("Codepoint: %d"), Row.Get()->Codepoint));
+					return FText::FromString(FString::Printf(TEXT("Codepoint: U+%04X (%d)"), Row.Get()->Codepoint, Row.Get()->Codepoint));
 				}
 			)
 		]
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
+			.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
 			.Text_Lambda(
 				[this]()
 				{
-					return FText::FromString(FString::Printf(TEXT("Can Load: %s"), *LexToString(Row.Get()->bCanLoadCodepoint)));
+					return FText::FromString(FString::Printf(TEXT("Size: X=%-2.0f Y=%-2.0f"), Row.Get()->Measurements.X, Row.Get()->Measurements.Y));
 				}
 			)
 		]
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("Size: %s"), *Row.Get()->Measurements.ToString()));
-				}
-			)
-		]
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
+			.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
 			.Text_Lambda(
 				[this]()
 				{
@@ -266,6 +259,24 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
+			.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("Can Load: %s"), *LexToString(Row.Get()->bCanLoadCodepoint)));
+				}
+			)
+		]
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
+			.Visibility_Lambda(
+				[this]()
+				{
+					return Row.Get()->FontData.GetSubFaceIndex() == 0 ? EVisibility::Collapsed : EVisibility::Visible;
+				}
+			)
 			.Text_Lambda(
 				[this]()
 				{
@@ -276,6 +287,13 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
+			.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
+			.Visibility_Lambda(
+				[this]()
+				{
+					return Row.Get()->FontData.GetSubFaceIndex() == 0 ? EVisibility::Collapsed : EVisibility::Visible;
+				}
+			)
 			.Text_Lambda(
 				[this]()
 				{
@@ -454,7 +472,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 						.Font(this, &SUnicodeBrowserWidget::GetFont)
 						.Justification(ETextJustify::Center)
 						.IsEnabled(true)
-						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
+						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
 						.Text(FText::FromString(FString::Printf(TEXT("%s"), *CurrentRow->Character)))
 					]
 				]
