@@ -15,7 +15,7 @@ class ITableRow;
 class SCheckBox;
 class STableViewBase;
 
-template<typename T>
+template <typename T>
 class SListView;
 
 namespace UbCheckBoxList
@@ -23,15 +23,14 @@ namespace UbCheckBoxList
 	struct FItemPair;
 }
 
-DECLARE_DELEGATE_OneParam( FOnCheckListItemStateChanged, int );
+DECLARE_DELEGATE_OneParam(FOnCheckListItemStateChanged, int32);
 
 /** A widget that can be used inside a CustomDialog to display a list of checkboxes */
-class SUbCheckBoxList: public SCompoundWidget
+class SUbCheckBoxList : public SCompoundWidget
 {
 	SLATE_BEGIN_ARGS(SUbCheckBoxList)
-		: _CheckBoxStyle(&FCoreStyle::Get().GetWidgetStyle<FCheckBoxStyle>("Checkbox"))
-		, _IncludeGlobalCheckBoxInHeaderRow(true)
-		{}
+			: _CheckBoxStyle(&FCoreStyle::Get().GetWidgetStyle<FCheckBoxStyle>("Checkbox")), _IncludeGlobalCheckBoxInHeaderRow(true) {}
+
 		/** The styling of the CheckBox */
 		SLATE_STYLE_ARGUMENT(FCheckBoxStyle, CheckBoxStyle)
 		/** The label of the item column header */
@@ -39,13 +38,13 @@ class SUbCheckBoxList: public SCompoundWidget
 		/** Optionally display a checkbox by the column header that toggles all items */
 		SLATE_ARGUMENT(bool, IncludeGlobalCheckBoxInHeaderRow)
 		/** Callback when any checkbox is changed. Parameter is the index of the item, or -1 if it was the "All"/Global checkbox */
-		SLATE_EVENT( FOnCheckListItemStateChanged, OnItemCheckStateChanged )
+		SLATE_EVENT(FOnCheckListItemStateChanged, OnItemCheckStateChanged)
 	SLATE_END_ARGS()
 
 public:
-	void Construct(FArguments const& Arguments);
-	void Construct(FArguments const& Arguments, TArray<FText> const& Items, bool bIsChecked);
-	void Construct(FArguments const& Arguments, TArray<TSharedRef<SWidget>> const& Items, bool bIsChecked);
+	void Construct(FArguments const& InArgs);
+	void Construct(FArguments const& InArgs, TArray<FText> const& InItems, bool bIsChecked);
+	void Construct(FArguments const& InArgs, TArray<TSharedRef<SWidget>> const& InItems, bool bIsChecked);
 
 	int32 AddItem(FText const& Text, bool bIsChecked);
 	int32 AddItem(TSharedRef<SWidget> Widget, bool bIsChecked);
@@ -61,7 +60,7 @@ public:
 	ECheckBoxState GetToggleSelectedState() const;
 	void OnToggleSelectedCheckBox(ECheckBoxState InNewState);
 	void SetItemChecked(int32 Index, ECheckBoxState InNewState);
-	void OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> InItem);
+	void OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> const& InItem);
 
 	TSharedRef<ITableRow> HandleGenerateRow(TSharedRef<UbCheckBoxList::FItemPair> InItem, TSharedRef<STableViewBase> const& OwnerTable);
 

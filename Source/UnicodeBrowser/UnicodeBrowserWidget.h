@@ -9,42 +9,19 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SListView.h"
 
-class SUniformGridPanel;
-THIRD_PARTY_INCLUDES_START
-// Include ICU headers
-#include <unicode/uchar.h>
-#include <unicode/unistr.h>
-THIRD_PARTY_INCLUDES_END
 #include "UnicodeBrowserWidget.generated.h"
+
 class UFont;
 class SScrollBox;
 class SUbCheckBoxList;
 class SCheckBoxList;
+class SUniformGridPanel;
 
 namespace UnicodeBrowser
 {
-	inline TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode)
-	{
-		for (auto const& BlockRange : FUnicodeBlockRange::GetUnicodeBlockRanges())
-		{
-			if (BlockRange.Range.Contains(CharCode))
-			{
-				return BlockRange.Index;
-			}
-		}
-		UE_LOG(LogTemp, Warning, TEXT("No Unicode block range found for character code %d: %s"), CharCode, *FString::Chr(CharCode));
-		return {};
-	}
-	
-	inline TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges()
-	{
-		auto BlockRange = FUnicodeBlockRange::GetUnicodeBlockRanges();
-		BlockRange.StableSort([](FUnicodeBlockRange const& A, FUnicodeBlockRange const& B)
-		{
-			return A.DisplayName.CompareTo(B.DisplayName) < 0;
-		});
-		return BlockRange;
-	}
+	inline TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
+
+	inline TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 
 	inline int32 GetRangeIndex(EUnicodeBlockRange BlockRange)
 	{
@@ -56,35 +33,7 @@ namespace UnicodeBrowser
 		);
 	}
 
-	static TArray<EUnicodeBlockRange> GetSymbolRanges()
-	{
-		TArray<EUnicodeBlockRange> SymbolRanges;
-		SymbolRanges.Add(EUnicodeBlockRange::Arrows);
-		SymbolRanges.Add(EUnicodeBlockRange::BlockElements);
-		SymbolRanges.Add(EUnicodeBlockRange::BoxDrawing);
-		SymbolRanges.Add(EUnicodeBlockRange::CurrencySymbols);
-		SymbolRanges.Add(EUnicodeBlockRange::Dingbats);
-		SymbolRanges.Add(EUnicodeBlockRange::EmoticonsEmoji);
-		SymbolRanges.Add(EUnicodeBlockRange::EnclosedAlphanumericSupplement);
-		SymbolRanges.Add(EUnicodeBlockRange::EnclosedAlphanumerics);
-		SymbolRanges.Add(EUnicodeBlockRange::GeneralPunctuation);
-		SymbolRanges.Add(EUnicodeBlockRange::GeometricShapes);
-		SymbolRanges.Add(EUnicodeBlockRange::MathematicalAlphanumericSymbols);
-		SymbolRanges.Add(EUnicodeBlockRange::MathematicalOperators);
-		SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousMathematicalSymbolsB);
-		SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousSymbols);
-		SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousSymbolsAndArrows);
-		SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousSymbolsAndPictographs);
-		SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousTechnical);
-		SymbolRanges.Add(EUnicodeBlockRange::NumberForms);
-		SymbolRanges.Add(EUnicodeBlockRange::SupplementalSymbolsAndPictographs);
-		SymbolRanges.Add(EUnicodeBlockRange::TransportAndMapSymbols);
-		SymbolRanges.Add(EUnicodeBlockRange::CurrencySymbols);
-		SymbolRanges.Add(EUnicodeBlockRange::Latin1Supplement);
-		SymbolRanges.Add(EUnicodeBlockRange::LatinExtendedB);
-		SymbolRanges.Sort();
-		return SymbolRanges;
-	}
+	static TArray<EUnicodeBlockRange> GetSymbolRanges();
 }
 
 class FUnicodeBrowserRow : public TSharedFromThis<FUnicodeBrowserRow>
@@ -115,28 +64,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	int32 NumCols = 32;
 
-	virtual void PostInitProperties() override
-	{
-		Super::PostInitProperties();
-		if (!Font.HasValidFont())
-		{
-			Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-		}
-	}
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override
-	{
-		Super::PostEditChangeProperty(PropertyChangedEvent);
-		if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UUnicodeBrowserOptions, NumCols))
-		{
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			OnNumColsChanged.Broadcast();
-		}
+	virtual void PostInitProperties() override;
 
-		if (!Font.HasValidFont())
-		{
-			Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-		}
-	}
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	DECLARE_MULTICAST_DELEGATE(FOnNumColsChangedDelegate);
 	FOnNumColsChangedDelegate OnNumColsChanged;
@@ -151,27 +81,29 @@ public:
 	SLATE_BEGIN_ARGS(SUnicodeBrowserWidget) {}
 	SLATE_END_ARGS()
 
-	FReply OnOnlySymbolsClicked();
 	void Construct(FArguments const& InArgs);
 
+protected:
+
 	TArray<TSharedPtr<FUnicodeBrowserRow>> Rows;
-	TMap<uint32, FString> SupportedCharacters;
-	TMap<EUnicodeBlockRange const, int32 const> RangeIndices;
+	TArray<TSharedPtr<SWidget>> RangeWidgets;
 	TArrayView<FUnicodeBlockRange const> Ranges;
+	TMap<EUnicodeBlockRange const, int32 const> RangeIndices;
+	TMap<uint32, FString> SupportedCharacters;
+	TObjectPtr<UUnicodeBrowserOptions> Options;
+	TSharedPtr<SScrollBox> RangeScrollbox;
+	TSharedPtr<SUbCheckBoxList> RangeSelector;
 	TSharedPtr<class IDetailsView> FontDetailsView;
 	mutable TMap<int32, TSharedRef<STextBlock>> RowWidgetTextCache;
 
 protected:
-	TSharedPtr<SWidget> MakeRangeWidget(FUnicodeBlockRange Range) const;
-	TSharedPtr<SUbCheckBoxList> MakeRangeSelector();
-	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
-	TSharedPtr<SScrollBox> RangeScrollbox;
-	TArray<TSharedPtr<SWidget>> RangeWidgets;
-	TSharedPtr<SUbCheckBoxList> RangeSelector;
-	void PopulateSupportedCharacters();
-	FString GetUnicodeCharacterName(int32 CharCode);
-	TObjectPtr<UUnicodeBrowserOptions> Options;
 	FReply OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const;
+	FReply OnOnlySymbolsClicked();
+	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
 	FSlateFontInfo GetFont() const;
-	void RebuildGridColumns(::FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const; 
+	FString GetUnicodeCharacterName(int32 CharCode);
+	TSharedPtr<SUbCheckBoxList> MakeRangeSelector();
+	TSharedPtr<SWidget> MakeRangeWidget(FUnicodeBlockRange Range) const;
+	void PopulateSupportedCharacters();
+	void RebuildGridColumns(::FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const;
 };

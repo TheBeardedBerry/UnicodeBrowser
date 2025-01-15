@@ -1,9 +1,10 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SUbCheckBoxList.h"
+
 #include "Widgets/Input/SCheckBox.h"
-#include "Widgets/Views/SListView.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/Views/SListView.h"
 
 #define LOCTEXT_NAMESPACE "SUbCheckBoxList"
 
@@ -12,14 +13,14 @@ namespace UbCheckBoxList
 	FName const ColumnID_CheckBox("CheckBox");
 	FName const ColumnID_Item("Item");
 
-	float const CheckBoxColumnWidth = 23.0f;
+	constexpr float CheckBoxColumnWidth = 23.0f;
 
 	struct FItemPair
 	{
 		TSharedRef<SWidget> Widget;
 		
 		bool bIsChecked;
-		FItemPair(TSharedRef<SWidget> InWidget, bool const bInChecked)
+		FItemPair(TSharedRef<SWidget> const& InWidget, bool const bInChecked)
 			: Widget(InWidget), bIsChecked(bInChecked)
 		{ }
 	};
@@ -33,7 +34,7 @@ namespace UbCheckBoxList
 		SLATE_END_ARGS()
 
 	public:
-		void Construct(FArguments const& InArgs, TSharedRef<STableViewBase> const& InOwner, TSharedRef<FItemPair> InItem)
+		void Construct(FArguments const& InArgs, TSharedRef<STableViewBase> const& InOwner, TSharedRef<FItemPair> const& InItem)
 		{
 			CheckBoxStyle = InArgs._CheckBoxStyle;
 			OnCheckUpdated = InArgs._OnCheckUpdated;
@@ -64,7 +65,7 @@ namespace UbCheckBoxList
 			return Item->bIsChecked ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 		}
 
-		void OnToggleSelectedCheckBox(ECheckBoxState const InNewState)
+		void OnToggleSelectedCheckBox(ECheckBoxState const InNewState) const
 		{
 			Item->bIsChecked = InNewState == ECheckBoxState::Checked;
 			// ReSharper disable once CppExpressionWithoutSideEffects
@@ -221,7 +222,7 @@ void SUbCheckBoxList::SetItemChecked(int32 const Index, ECheckBoxState const InN
 	}
 }
 
-void SUbCheckBoxList::OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> InItem)
+void SUbCheckBoxList::OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> const& InItem)
 {
 	UpdateAllChecked();
 	// ReSharper disable once CppExpressionWithoutSideEffects
