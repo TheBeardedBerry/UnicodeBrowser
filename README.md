@@ -64,6 +64,7 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 * Figure out how to detect �, ￼ et al., so they can be (optionally) filtered out.
 * Persist window state
 * Improve initial load time
+* Settings page for adding new presets
 * Your suggestions?
 
 # License
