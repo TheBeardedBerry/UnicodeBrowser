@@ -6,6 +6,8 @@
 #include "SSimpleButton.h"
 #include "SlateOptMacros.h"
 
+#include "Algo/Count.h"
+
 #include "Components/VerticalBox.h"
 
 #include "Editor/PropertyEditor/Private/Presentation/PropertyEditor/PropertyEditor.h"
@@ -99,8 +101,18 @@ TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector()
 		.IncludeGlobalCheckBoxInHeaderRow(true);
 	for (auto const& Range : Ranges)
 	{
+		int32 const Num = Algo::CountIf(
+			Rows,
+			[&Range, this](TSharedPtr<FUnicodeBrowserRow> const& Row)
+			{
+				return Row->BlockRange == Range.Index && (Options->bShowMissing || Row->bCanLoadCodepoint) && (Options->bShowZeroSize || !Row->Measurements.IsZero());
+			}
+		);
 		auto ItemWidget = SNew(SSimpleButton)
-			.Text(Range.DisplayName)
+			.Text(FText::FromString(FString::Printf(TEXT("%s (%d)"), *Range.DisplayName.ToString(), Num)))
+			.ToolTipText(
+				FText::FromString(FString::Printf(TEXT("%s: Range %d Codes %d - %d"), *Range.DisplayName.ToString(), Range.Index, Range.Range.GetLowerBoundValue(), Range.Range.GetUpperBoundValue()))
+			)
 			.OnClicked(this, &SUnicodeBrowserWidget::OnRangeClicked, Range.Index);
 		int32 Index = CheckBoxList->AddItem(ItemWidget, false);
 		RangeIndices.Add(Range.Index, Index);
@@ -127,7 +139,7 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 	if (CurrentRow == Row) return FReply::Handled();
 	CurrentRow = Row;
 	CurrentCharacterView->SetText(FText::FromString(CurrentRow->Character));
-	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->CharCode, *CurrentRow->Character)));
+	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
 	return FReply::Handled();
 }
 
@@ -153,9 +165,9 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 	GridPanel->ClearChildren();
 	auto const NumCols = Options->NumCols;
 	auto FilteredRows = Rows.FilterByPredicate(
-		[Range](TSharedPtr<FUnicodeBrowserRow> const& Row)
+		[Range, this](TSharedPtr<FUnicodeBrowserRow> const& Row)
 		{
-			return Row->BlockRange == Range.Index;
+			return Row->BlockRange == Range.Index && (Options->bShowMissing || Row->bCanLoadCodepoint) && (Options->bShowZeroSize || !Row->Measurements.IsZero());
 		}
 	);
 	GridPanel->SetMinDesiredSlotHeight(Options->Font.Size * 2);
@@ -165,7 +177,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 		auto const Row = FilteredRows[i];
 		auto Slot = GridPanel->AddSlot(i % NumCols, i / NumCols);
 		TSharedPtr<SBorder> TextBlock;
-		if (!RowWidgetTextCache.Contains(Row->CharCode))
+		if (!RowWidgetTextCache.Contains(Row->Codepoint))
 		{
 			TextBlock = SNew(SBorder)
 				.BorderImage(nullptr)
@@ -177,15 +189,15 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
 					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->CharCode, *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 				];
 
-			RowWidgetTextCache.Add(Row->CharCode, TextBlock.ToSharedRef());
+			RowWidgetTextCache.Add(Row->Codepoint, TextBlock.ToSharedRef());
 		}
 		else
 		{
-			TextBlock = RowWidgetTextCache[Row->CharCode];
+			TextBlock = RowWidgetTextCache[Row->Codepoint];
 		}
 
 		Slot
@@ -195,11 +207,91 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 	}
 }
 
+void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
+{
+	Row = InArgs._Row;
+	ChildSlot
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("Codepoint: %d"), Row.Get()->Codepoint));
+				}
+			)
+		]
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("Can Load: %s"), *LexToString(Row.Get()->bCanLoadCodepoint)));
+				}
+			)
+		]
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("Size: %s"), *Row.Get()->Measurements.ToString()));
+				}
+			)
+		]
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("Font: %s"), *Row.Get()->FontData.GetFontFilename()));
+				}
+			)
+		]
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("SubFace Index: %d"), Row.Get()->FontData.GetSubFaceIndex()));
+				}
+			)
+		]
+		+ SVerticalBox::Slot()
+		[
+			SNew(STextBlock)
+			.Text_Lambda(
+				[this]()
+				{
+					return FText::FromString(FString::Printf(TEXT("Scaling Factor: %3.3f"), Row.Get()->ScalingFactor));
+				}
+			)
+		]
+	];
+}
+
+TSharedPtr<FUnicodeBrowserRow> SUnicodeCharacterInfo::GetRow() const
+{
+	return {};
+}
+
+void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
+{
+	Row = InRow;
+	Invalidate(EInvalidateWidgetReason::PaintAndVolatility);
+}
+
 TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range) const
 {
 	auto const GridPanel = SNew(SUniformGridPanel)
 		.SlotPadding(FMargin(6.f, 4.f));
-	Options->OnNumColsChanged.AddSPLambda(
+	Options->OnChanged.AddSPLambda(
 		GridPanel.ToSharedPtr().Get(),
 		[GridPanel, Range, this]()
 		{
@@ -263,11 +355,7 @@ void UUnicodeBrowserOptions::PostInitProperties()
 void UUnicodeBrowserOptions::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UUnicodeBrowserOptions, NumCols))
-	{
-		// ReSharper disable once CppExpressionWithoutSideEffects
-		OnNumColsChanged.Broadcast();
-	}
+	OnChanged.Broadcast();
 
 	if (!Font.HasValidFont())
 	{
@@ -346,6 +434,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.Value(0.25)
 				.MinSize(50)
 				[
+
 					SNew(SScaleBox)
 					.Stretch(EStretch::ScaleToFit)
 					[
@@ -355,10 +444,9 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 						.Font(this, &SUnicodeBrowserWidget::GetFont)
 						.Justification(ETextJustify::Center)
 						.IsEnabled(true)
-						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->CharCode, *CurrentRow->Character)))
+						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
 						.Text(FText::FromString(FString::Printf(TEXT("%s"), *CurrentRow->Character)))
 					]
-
 				]
 				+ SSplitter::Slot()
 				.SizeRule(SSplitter::FractionOfParent)
@@ -366,6 +454,27 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				[
 
 					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.VAlign(VAlign_Fill)
+					.HAlign(HAlign_Fill)
+					[
+						SNew(SExpandableArea)
+						.HeaderPadding(FMargin(2, 4))
+						.HeaderContent()
+						[
+							SNew(STextBlock)
+							.Font(FAppStyle::Get().GetFontStyle("DetailsView.CategoryFontStyle"))
+							.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+							.Text(FText::FromString(TEXT("Character Info")))
+						]
+						.BodyContent()
+						[
+							SNew(SUnicodeCharacterInfo)
+							.Row_Lambda([this]() { return CurrentRow; })
+						]
+
+					]
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					.VAlign(VAlign_Top)
@@ -452,17 +561,27 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 {
 	FSlateFontInfo const FontInfo = Options->Font;
 	TSharedRef<FSlateFontMeasure> const FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
+	auto const FontCache = FSlateApplication::Get().GetRenderer()->GetFontCache();
+
 	for (auto const& Range : Ranges)
 	{
 		for (int CharCode = Range.Range.GetLowerBound().GetValue(); CharCode <= Range.Range.GetUpperBound().GetValue(); ++CharCode)
 		{
 			FString UnicodeString;
+
 			if (FUnicodeChar::CodepointToString(CharCode, UnicodeString))
 			{
-				if (FontMeasureService->Measure(UnicodeString, FontInfo).X > 0)
-				{
-					Rows.Add(MakeShared<FUnicodeBrowserRow>(CharCode, UnicodeString, Range.Index));
-				}
+				float ScalingFactor;
+				auto& FontData = FontCache->GetFontDataForCodepoint(FontInfo, CharCode, ScalingFactor);
+				auto Row = MakeShared<FUnicodeBrowserRow>();
+				Row->Codepoint = CharCode;
+				Row->Character = UnicodeString;
+				Row->BlockRange = Range.Index;
+				Row->FontData = FontData;
+				Row->ScalingFactor = ScalingFactor;
+				Row->bCanLoadCodepoint = FontCache->CanLoadCodepoint(FontData, CharCode);
+				Row->Measurements = FontMeasureService->Measure(UnicodeString, FontInfo);
+				Rows.Add(Row);
 			}
 		}
 	}

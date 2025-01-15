@@ -39,22 +39,25 @@ namespace UnicodeBrowser
 class FUnicodeBrowserRow : public TSharedFromThis<FUnicodeBrowserRow>
 {
 public:
-	FUnicodeBrowserRow(int32 const InCharCode, FString const& InCharacter, EUnicodeBlockRange InBlockRange)
-		: CharCode(InCharCode),
-		Character(InCharacter)
-	{
-		BlockRange = UnicodeBrowser::GetUnicodeBlockRangeFromChar(InCharCode);
-	}
+	FUnicodeBrowserRow() = default;
 
-	int32 CharCode;
+	int32 Codepoint = 0;
 	FString Character;
 	TOptional<EUnicodeBlockRange> BlockRange;
+	FFontData FontData;
+	float ScalingFactor = 1.0f;
+	FVector2D Measurements;
+	bool bCanLoadCodepoint = false;
 
 	friend bool operator==(FUnicodeBrowserRow const& Lhs, FUnicodeBrowserRow const& RHS)
 	{
-		return Lhs.CharCode == RHS.CharCode
+		return Lhs.Codepoint == RHS.Codepoint
 			&& Lhs.Character == RHS.Character
-			&& Lhs.BlockRange == RHS.BlockRange;
+			&& Lhs.BlockRange == RHS.BlockRange
+			&& Lhs.FontData == RHS.FontData
+			&& Lhs.ScalingFactor == RHS.ScalingFactor
+			&& Lhs.Measurements == RHS.Measurements
+			&& Lhs.bCanLoadCodepoint == RHS.bCanLoadCodepoint;
 	}
 
 	friend bool operator!=(FUnicodeBrowserRow const& Lhs, FUnicodeBrowserRow const& RHS) { return !(Lhs == RHS); }
@@ -64,8 +67,8 @@ UCLASS(Hidden, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "
 class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject
 {
 	GENERATED_BODY()
-public:
 
+public:
 	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
 	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient)
 	FSlateFontInfo Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
@@ -73,14 +76,20 @@ public:
 	UPROPERTY(EditAnywhere)
 	int32 NumCols = 24;
 
+	UPROPERTY(EditAnywhere)
+	bool bShowMissing = false;
+
+	UPROPERTY(EditAnywhere)
+	bool bShowZeroSize = false;
+
 	virtual void PostInitProperties() override;
 
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	DECLARE_MULTICAST_DELEGATE(FOnNumColsChangedDelegate);
-	FOnNumColsChangedDelegate OnNumColsChanged;
-	
+	FOnNumColsChangedDelegate OnChanged;
 };
+
 /**
  * 
  */
@@ -93,7 +102,6 @@ public:
 	void Construct(FArguments const& InArgs);
 
 protected:
-
 	TArray<TSharedPtr<FUnicodeBrowserRow>> Rows;
 	TArray<TSharedPtr<SWidget>> RangeWidgets;
 	TArrayView<FUnicodeBlockRange const> Ranges;
@@ -119,4 +127,18 @@ protected:
 	TSharedPtr<SWidget> MakeRangeWidget(FUnicodeBlockRange Range) const;
 	void PopulateSupportedCharacters();
 	void RebuildGridColumns(::FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const;
+};
+class SUnicodeCharacterInfo: public SCompoundWidget
+{
+public:
+	SLATE_BEGIN_ARGS(SUnicodeCharacterInfo) {}
+		SLATE_ATTRIBUTE(TSharedPtr<FUnicodeBrowserRow>, Row);
+	SLATE_END_ARGS()
+
+	void Construct(FArguments const& InArgs);
+	
+	TAttribute<TSharedPtr<FUnicodeBrowserRow>> Row;
+	TSharedPtr<FUnicodeBrowserRow> GetRow() const;
+	
+	void SetRow(TSharedPtr<FUnicodeBrowserRow> InRow);
 };
