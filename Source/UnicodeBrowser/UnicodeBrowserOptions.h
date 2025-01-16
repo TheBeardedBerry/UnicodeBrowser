@@ -1,4 +1,4 @@
-// all rights reserved
+// SPDX-FileCopyrightText: 2025 NTY.studio
 
 #pragma once
 

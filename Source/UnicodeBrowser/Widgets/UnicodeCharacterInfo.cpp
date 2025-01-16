@@ -1,18 +1,15 @@
-// all rights reserved
-
-
 #include "UnicodeCharacterInfo.h"
 
 #include "SlateOptMacros.h"
+
 #include "UnicodeBrowser/UnicodeBrowserRow.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-
 void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 {
 	Row = InArgs._Row;
-	
+
 	ChildSlot
 	[
 		SNew(SVerticalBox)
@@ -52,7 +49,7 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 			.Text_Lambda(
 				[this]()
 				{
-					if(Row.Get()->GetFontData())
+					if (Row.Get()->GetFontData())
 					{
 						return FText::FromString(FString::Printf(TEXT("Font: %s"), *Row.Get()->GetFontData()->GetFontFilename()));
 					}
@@ -69,7 +66,7 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 			.Text_Lambda(
 				[this]()
 				{
-					if(Row.Get()->GetFontData())
+					if (Row.Get()->GetFontData())
 					{
 						return FText::FromString(FString::Printf(TEXT("SubFace Index: %d"), Row.Get()->GetFontData()->GetSubFaceIndex()));
 					}
@@ -95,7 +92,7 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 
 TSharedPtr<FUnicodeBrowserRow> SUnicodeCharacterInfo::GetRow() const
 {
-	return {};
+	return Row.Get();
 }
 
 void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)

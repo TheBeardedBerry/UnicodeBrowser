@@ -1,69 +1,73 @@
 #pragma once
+
 #include "Fonts/FontMeasure.h"
 #include "Fonts/UnicodeBlockRange.h"
 
 class FUnicodeBrowserRow : public TSharedFromThis<FUnicodeBrowserRow>
 {
 public:
-	FUnicodeBrowserRow(int32 CodePointIn, TOptional<EUnicodeBlockRange> BlockRangeIn, FSlateFontInfo const *FontInfoIn = nullptr) : Codepoint(CodePointIn), BlockRange(BlockRangeIn), FontInfo(FontInfoIn)
-	{		
+	FUnicodeBrowserRow(int32 const CodePointIn, TOptional<EUnicodeBlockRange> BlockRangeIn, FSlateFontInfo const* FontInfoIn = nullptr) : Codepoint(CodePointIn),
+		BlockRange(BlockRangeIn),
+		FontInfo(FontInfoIn)
+	{
 		FUnicodeChar::CodepointToString(Codepoint, Character);
 	}
 
-	FString Character;			
+	FString Character;
 	int32 Codepoint = 0;
-	TOptional<EUnicodeBlockRange> BlockRange;	
+	TOptional<EUnicodeBlockRange> BlockRange;
 
 private:
-	FSlateFontInfo const *FontInfo = nullptr;
-	const FFontData *FontData = nullptr;
-	TOptional<float> ScalingFactor;
-	TOptional<FVector2D> Measurements;
-	TOptional<bool> bCanLoadCodepoint;
-
+	FSlateFontInfo const* FontInfo = nullptr;
+	mutable FFontData const* FontData = nullptr;
+	mutable TOptional<FVector2D> Measurements;
+	mutable TOptional<bool> bCanLoadCodepoint;
+	mutable TOptional<float> ScalingFactor;
 	
 public:
-	FFontData const* GetFontData()
+	FFontData const* GetFontData() const
 	{
-		if(!FontData && FontInfo)
+		if (!FontData && FontInfo)
 		{
 			float ScalingFactorResult;
 			FontData = &FSlateApplication::Get().GetRenderer()->GetFontCache()->GetFontDataForCodepoint(*FontInfo, Codepoint, ScalingFactorResult);
 			ScalingFactor = ScalingFactorResult;
 		}
-		
+
 		return FontData;
 	}
 
-	bool CanLoadCodepoint()
+	bool CanLoadCodepoint() const
 	{
-		if(!bCanLoadCodepoint.IsSet() && GetFontData()){
-			bCanLoadCodepoint = FSlateApplication::Get().GetRenderer()->GetFontCache()->CanLoadCodepoint(*FontData, Codepoint);			
+		if (!bCanLoadCodepoint.IsSet() && GetFontData())
+		{
+			bCanLoadCodepoint = FSlateApplication::Get().GetRenderer()->GetFontCache()->CanLoadCodepoint(*FontData, Codepoint);
 		}
 
 		return bCanLoadCodepoint.Get(false);
 	}
 
-	FVector2D GetMeasurements()
+	FVector2D GetMeasurements() const
 	{
-		if(!Measurements.IsSet() && FontInfo){	
-			Measurements = FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(*Character, *FontInfo);			
+		if (!Measurements.IsSet() && FontInfo)
+		{
+			Measurements = FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(*Character, *FontInfo);
 		}
 
 		return Measurements.Get(FVector2D::ZeroVector);
 	}
 
-	float GetScaling()
+	float GetScaling() const
 	{
-		if(!ScalingFactor.IsSet())
+		if (!ScalingFactor.IsSet())
 		{
 			// this will try to populate the ScalingFactor
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			GetFontData();
 		}
 
 		return ScalingFactor.Get(0.0f);
 	}
-	
 
 	friend bool operator==(FUnicodeBrowserRow const& Lhs, FUnicodeBrowserRow const& RHS)
 	{

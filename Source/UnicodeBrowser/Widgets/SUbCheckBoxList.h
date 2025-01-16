@@ -1,4 +1,5 @@
 ﻿// SPDX-FileCopyrightText: 2025 NTY.studio
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -46,24 +47,6 @@ public:
 	void Construct(FArguments const& InArgs, TArray<FText> const& InItems, bool bIsChecked);
 	void Construct(FArguments const& InArgs, TArray<TSharedRef<SWidget>> const& InItems, bool bIsChecked);
 
-	int32 AddItem(FText const& Text, bool bIsChecked);
-	int32 AddItem(TSharedRef<SWidget> Widget, bool bIsChecked);
-	void UncheckAll();
-	void RemoveAll();
-	void RemoveItem(int32 Index);
-	bool IsItemChecked(int32 Index) const;
-
-	TArray<bool> GetValues() const;
-	int32 GetNumCheckboxes() const;
-
-	void UpdateAllChecked();
-	ECheckBoxState GetToggleSelectedState() const;
-	void OnToggleSelectedCheckBox(ECheckBoxState InNewState);
-	void SetItemChecked(int32 Index, ECheckBoxState InNewState);
-	void OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> const& InItem);
-
-	TSharedRef<ITableRow> HandleGenerateRow(TSharedRef<UbCheckBoxList::FItemPair> InItem, TSharedRef<STableViewBase> const& OwnerTable);
-
 	ECheckBoxState bAllCheckedState = ECheckBoxState::Unchecked;
 	TArray<TSharedRef<UbCheckBoxList::FItemPair>> Items;
 
@@ -71,4 +54,19 @@ public:
 	TSharedPtr<SListView<TSharedRef<UbCheckBoxList::FItemPair>>> ListView;
 
 	FOnCheckListItemStateChanged OnItemCheckStateChanged;
-};
+	
+public:
+	ECheckBoxState GetToggleSelectedState() const;
+	TArray<bool> GetValues() const;
+	TSharedRef<ITableRow> HandleGenerateRow(TSharedRef<UbCheckBoxList::FItemPair> InItem, TSharedRef<STableViewBase> const& OwnerTable);
+	bool IsItemChecked(int32 Index) const;
+	int32 AddItem(FText const& Text, bool bIsChecked);
+	int32 AddItem(TSharedRef<SWidget> Widget, bool bIsChecked);
+	int32 GetNumCheckboxes() const;
+	void OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> const& InItem);
+	void OnToggleSelectedCheckBox(ECheckBoxState InNewState);
+	void RemoveAll();
+	void RemoveItem(int32 Index);
+	void SetItemChecked(int32 Index, ECheckBoxState InNewState);
+	void UncheckAll();
+	void UpdateAllChecked();};
