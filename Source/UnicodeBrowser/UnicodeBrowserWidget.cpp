@@ -199,7 +199,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
 					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-0p6.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 				];
 
