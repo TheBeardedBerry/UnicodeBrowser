@@ -12,12 +12,6 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 {
 	Row = InArgs._Row;
-
-	if(!Row.Get()->GetFontData())
-	{
-		// chicken out if the row doesn't have valid FontData (e.g. the dummy which is generated when spawning the Tool Window)
-		return;
-	}
 	
 	ChildSlot
 	[
