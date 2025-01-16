@@ -455,6 +455,13 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 		for (int CharCode = Range.Range.GetLowerBound().GetValue(); CharCode <= Range.Range.GetUpperBound().GetValue(); ++CharCode)
 		{
 			auto Row = MakeShared<FUnicodeBrowserRow>(CharCode, Range.Index, &Options->Font);
+
+			if(Options->bCacheCharacterMetaOnLoad)
+			{
+				Row->GetMeasurements();
+				Row->CanLoadCodepoint();
+			}
+			
 			if(Options->bShowMissing || Row->CanLoadCodepoint())
 			{
 				RangeArray.Add(Row);

@@ -22,11 +22,17 @@ public:
 	UPROPERTY(EditAnywhere)
 	int32 NumCols = 24;
 
+	// Show Characters which can't be displayed by the font (primary for debug purposes)
 	UPROPERTY(EditAnywhere)
 	bool bShowMissing = false;
 
+	// Show Characters which have a measurement of 0x0 (primary for debug purposes)
 	UPROPERTY(EditAnywhere)
 	bool bShowZeroSize = false;
+
+	// Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews
+	UPROPERTY(EditAnywhere)
+	bool bCacheCharacterMetaOnLoad = false;
 
 	virtual void PostInitProperties() override;
 
