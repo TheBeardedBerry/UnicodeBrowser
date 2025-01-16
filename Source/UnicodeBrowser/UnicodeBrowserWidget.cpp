@@ -48,7 +48,7 @@ TOptional<EUnicodeBlockRange> UnicodeBrowser::GetUnicodeBlockRangeFromChar(int32
 			return BlockRange.Index;
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("No Unicode block range found for character code %d: %s"), CharCode, *FString::Chr(CharCode));
+	UE_LOG(LogTemp, Warning, TEXT("No Unicode block range found for character code 0x%04X: %s"), CharCode, *FString::Chr(CharCode));
 	return {};
 }
 
@@ -77,6 +77,8 @@ TArray<EUnicodeBlockRange> UnicodeBrowser::GetSymbolRanges()
 	SymbolRanges.Add(EUnicodeBlockRange::EnclosedAlphanumerics);
 	SymbolRanges.Add(EUnicodeBlockRange::GeneralPunctuation);
 	SymbolRanges.Add(EUnicodeBlockRange::GeometricShapes);
+	SymbolRanges.Add(EUnicodeBlockRange::Latin1Supplement);
+	SymbolRanges.Add(EUnicodeBlockRange::LatinExtendedB);
 	SymbolRanges.Add(EUnicodeBlockRange::MathematicalAlphanumericSymbols);
 	SymbolRanges.Add(EUnicodeBlockRange::MathematicalOperators);
 	SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousMathematicalSymbolsB);
@@ -87,10 +89,6 @@ TArray<EUnicodeBlockRange> UnicodeBrowser::GetSymbolRanges()
 	SymbolRanges.Add(EUnicodeBlockRange::NumberForms);
 	SymbolRanges.Add(EUnicodeBlockRange::SupplementalSymbolsAndPictographs);
 	SymbolRanges.Add(EUnicodeBlockRange::TransportAndMapSymbols);
-	SymbolRanges.Add(EUnicodeBlockRange::CurrencySymbols);
-	SymbolRanges.Add(EUnicodeBlockRange::Latin1Supplement);
-	SymbolRanges.Add(EUnicodeBlockRange::LatinExtendedB);
-	SymbolRanges.Sort();
 	return SymbolRanges;
 }
 
@@ -99,24 +97,22 @@ TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector()
 	auto CheckBoxList = SNew(SUbCheckBoxList)
 		.ItemHeaderLabel(FText::FromString(TEXT("Unicode Block Ranges")))
 		.IncludeGlobalCheckBoxInHeaderRow(true);
+
 	for (auto const& Range : Ranges)
 	{
-		int32 const Num = Algo::CountIf(
-			Rows,
-			[&Range, this](TSharedPtr<FUnicodeBrowserRow> const& Row)
-			{
-				return Row->BlockRange == Range.Index && (Options->bShowMissing || Row->bCanLoadCodepoint) && (Options->bShowZeroSize || !Row->Measurements.IsZero());
-			}
-		);
+		int32 const Num = RangeCharacterCount.Contains(Range.Index) ? RangeCharacterCount.FindChecked(Range.Index) : 0;
+
 		auto ItemWidget = SNew(SSimpleButton)
 			.Text(FText::FromString(FString::Printf(TEXT("%s (%d)"), *Range.DisplayName.ToString(), Num)))
 			.ToolTipText(
-				FText::FromString(FString::Printf(TEXT("%s: Range %d Codes %d - %d"), *Range.DisplayName.ToString(), Range.Index, Range.Range.GetLowerBoundValue(), Range.Range.GetUpperBoundValue()))
+				FText::FromString(FString::Printf(TEXT("%s: Range 0x%04X Codes 0x%04X - 0x%04X"), *Range.DisplayName.ToString(), Range.Index, Range.Range.GetLowerBoundValue(), Range.Range.GetUpperBoundValue()))
 			)
 			.OnClicked(this, &SUnicodeBrowserWidget::OnRangeClicked, Range.Index);
+
 		int32 Index = CheckBoxList->AddItem(ItemWidget, false);
 		RangeIndices.Add(Range.Index, Index);
 	}
+
 	return CheckBoxList;
 }
 
@@ -125,9 +121,8 @@ FReply SUnicodeBrowserWidget::OnRangeClicked(EUnicodeBlockRange const BlockRange
 	if (RangeScrollbox.IsValid())
 	{
 		if (!RangeIndices.Contains(BlockRange)) return FReply::Unhandled();
-		auto const Index = RangeIndices[BlockRange];
-		if (!RangeWidgets.IsValidIndex(Index)) return FReply::Unhandled();
-		auto const RangeWidget = RangeWidgets[Index];
+		if (!RangeWidgets.Contains(BlockRange)) return FReply::Unhandled();
+		auto const RangeWidget = RangeWidgets.FindChecked(BlockRange);
 		RangeScrollbox->ScrollDescendantIntoView(RangeWidget);
 		return FReply::Handled();
 	}
@@ -139,7 +134,7 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 	if (CurrentRow == Row) return FReply::Handled();
 	CurrentRow = Row;
 	CurrentCharacterView->SetText(FText::FromString(CurrentRow->Character));
-	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
+	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: 0x%04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
 	return FReply::Handled();
 }
 
@@ -189,7 +184,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
 					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: 0x%04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 				];
 
@@ -219,7 +214,7 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 			.Text_Lambda(
 				[this]()
 				{
-					return FText::FromString(FString::Printf(TEXT("Codepoint: %d"), Row.Get()->Codepoint));
+					return FText::FromString(FString::Printf(TEXT("Codepoint: 0x%04X"), Row.Get()->Codepoint));
 				}
 			)
 		]
@@ -287,21 +282,14 @@ void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
 	Invalidate(EInvalidateWidgetReason::PaintAndVolatility);
 }
 
-TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range) const
+void SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range)
 {
 	auto const GridPanel = SNew(SUniformGridPanel)
 		.SlotPadding(FMargin(6.f, 4.f));
-	Options->OnChanged.AddSPLambda(
-		GridPanel.ToSharedPtr().Get(),
-		[GridPanel, Range, this]()
-		{
-			RebuildGridColumns(Range, GridPanel);
-		}
-	);
-
+	
 	RebuildGridColumns(Range, GridPanel);
 
-	return SNew(SExpandableArea)
+	auto RangeWidget = SNew(SExpandableArea)
 		.Visibility_Lambda(
 			[RangeIndex = Range.Index, this]()
 			{
@@ -325,6 +313,9 @@ TSharedPtr<SWidget> SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange co
 				GridPanel
 			]
 		];
+
+	RangeWidgets.Add(Range.Index, RangeWidget);
+	RangeWidgetsGrid.Add(Range.Index, GridPanel);
 }
 
 TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrowserOptions* Options)
@@ -355,12 +346,13 @@ void UUnicodeBrowserOptions::PostInitProperties()
 void UUnicodeBrowserOptions::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	OnChanged.Broadcast();
 
 	if (!Font.HasValidFont())
 	{
 		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 	}
+	
+	OnChanged.Broadcast();
 }
 
 FReply SUnicodeBrowserWidget::OnOnlySymbolsClicked()
@@ -380,17 +372,25 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	{
 		Options = NewObject<UUnicodeBrowserOptions>();
 		Options->Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-		FontDetailsView = UUnicodeBrowserOptions::MakePropertyEditor(Options);
+		FontDetailsView = UUnicodeBrowserOptions::MakePropertyEditor(Options);		
 	}
+
+	// idk if Construct may be called multiple times, so this will prevent several 
+	if(!Options->OnChanged.IsBound()){
+		Options->OnChanged.AddRaw(this,	&SUnicodeBrowserWidget::UpdateFromFont);
+	}
+	
 	bool const bInit = Rows.Num() > 0;
 	if (!bInit)
 	{
 		Ranges = UnicodeBrowser::GetUnicodeBlockRanges();
 		PopulateSupportedCharacters();
 		RangeWidgets.Reset();
+		RangeWidgetsGrid.Reset();
 		RangeIndices.Reset();
 		RangeWidgets.Reserve(Ranges.Num());
 		RangeIndices.Reserve(Ranges.Num());
+		RangeWidgetsGrid.Reserve(Ranges.Num());
 	}
 	RangeSelector = MakeRangeSelector();
 	CurrentRow = Rows.Num() > 0 ? Rows[0] : nullptr;
@@ -444,7 +444,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 						.Font(this, &SUnicodeBrowserWidget::GetFont)
 						.Justification(ETextJustify::Center)
 						.IsEnabled(true)
-						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %d. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
+						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
 						.Text(FText::FromString(FString::Printf(TEXT("%s"), *CurrentRow->Character)))
 					]
 				]
@@ -543,16 +543,39 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	{
 		for (auto const& Range : Ranges)
 		{
-			auto RangeWidget = MakeRangeWidget(Range);
-			RangeWidgets.Add(RangeWidget);
+			MakeRangeWidget(Range);			
 		}
 		OnOnlySymbolsClicked();
 		for (auto const& RangeWidget : RangeWidgets)
 		{
 			RangeScrollbox->AddSlot()
 			[
-				RangeWidget.ToSharedRef()
+				RangeWidget.Value.ToSharedRef()
 			];
+		}
+	}
+}
+
+void SUnicodeBrowserWidget::UpdateFromFont()
+{
+	// rebuild the character list
+	PopulateSupportedCharacters();
+
+	// rebuild the grid
+	for (auto const& Range : Ranges)
+	{
+		if(auto GridPanel = RangeWidgetsGrid.Find(Range.Index))
+		{
+			RebuildGridColumns(Range, GridPanel->ToSharedRef());
+		}
+	}
+
+	// set range visibility automatic
+	for (auto const& Range : Ranges)
+	{
+		if(RangeIndices.Contains(Range.Index)){
+			const bool bRangeHasCharacters = RangeCharacterCount.Contains(Range.Index) ? RangeCharacterCount.FindChecked(Range.Index) > 0 : false;
+			RangeSelector.Get()->SetItemChecked(RangeIndices.FindChecked(Range.Index), bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 		}
 	}
 }
@@ -561,29 +584,48 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 {
 	FSlateFontInfo const FontInfo = Options->Font;
 	TSharedRef<FSlateFontMeasure> const FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
-	auto const FontCache = FSlateApplication::Get().GetRenderer()->GetFontCache();
+	TSharedRef<FSlateFontCache> const FontCache = FSlateApplication::Get().GetRenderer()->GetFontCache();
 
+	
+	RangeCharacterCount.Empty();
+	RangeCharacterCount.Reserve(Ranges.Num());
+	
+	Rows.Empty();
+	
 	for (auto const& Range : Ranges)
 	{
+		int RangeCount = 0;
 		for (int CharCode = Range.Range.GetLowerBound().GetValue(); CharCode <= Range.Range.GetUpperBound().GetValue(); ++CharCode)
 		{
 			FString UnicodeString;
 
-			if (FUnicodeChar::CodepointToString(CharCode, UnicodeString))
-			{
-				float ScalingFactor;
-				auto& FontData = FontCache->GetFontDataForCodepoint(FontInfo, CharCode, ScalingFactor);
-				auto Row = MakeShared<FUnicodeBrowserRow>();
-				Row->Codepoint = CharCode;
-				Row->Character = UnicodeString;
-				Row->BlockRange = Range.Index;
-				Row->FontData = FontData;
-				Row->ScalingFactor = ScalingFactor;
-				Row->bCanLoadCodepoint = FontCache->CanLoadCodepoint(FontData, CharCode);
-				Row->Measurements = FontMeasureService->Measure(UnicodeString, FontInfo);
-				Rows.Add(Row);
+			FUnicodeChar::CodepointToString(CharCode, UnicodeString); // this always returns true anyways
+			
+			float ScalingFactor;
+			const FFontData& FontData = FontCache->GetFontDataForCodepoint(FontInfo, CharCode, ScalingFactor);
+				
+			auto Row = MakeShared<FUnicodeBrowserRow>();
+			Row->Codepoint = CharCode;
+			Row->Character = UnicodeString;
+			Row->BlockRange = Range.Index;
+			Row->FontData = FontData;
+			Row->ScalingFactor = ScalingFactor;
+
+			Row->bCanLoadCodepoint = FontCache->CanLoadCodepoint(FontData, CharCode);
+			if(!Options->bShowMissing && !Row->bCanLoadCodepoint){
+				continue;
 			}
+				
+			Row->Measurements = FontMeasureService->Measure(*UnicodeString, FontInfo);
+			if(!Options->bShowZeroSize && Row->Measurements.IsZero()){
+				continue;
+			}
+
+			Rows.Add(Row);
+			RangeCount++;			
 		}
+
+		RangeCharacterCount.Add(Range.Index, RangeCount);
 	}
 }
 

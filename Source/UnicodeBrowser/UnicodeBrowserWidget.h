@@ -21,7 +21,7 @@ namespace UnicodeBrowser
 {
 	inline TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
 
-	inline TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
+	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 
 	inline int32 GetRangeIndex(EUnicodeBlockRange BlockRange)
 	{
@@ -101,12 +101,18 @@ public:
 
 	void Construct(FArguments const& InArgs);
 
+	
 protected:
+	TMap<uint32, FString> SupportedCharacters;
+	
+	
 	TArray<TSharedPtr<FUnicodeBrowserRow>> Rows;
-	TArray<TSharedPtr<SWidget>> RangeWidgets;
+	TMap<EUnicodeBlockRange, int32> RangeCharacterCount;
+	
+	TMap<EUnicodeBlockRange, TSharedPtr<SExpandableArea>> RangeWidgets;
+	TMap<EUnicodeBlockRange, TSharedPtr<SUniformGridPanel>> RangeWidgetsGrid;
 	TArrayView<FUnicodeBlockRange const> Ranges;
 	TMap<EUnicodeBlockRange const, int32 const> RangeIndices;
-	TMap<uint32, FString> SupportedCharacters;
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
@@ -124,10 +130,15 @@ protected:
 	FSlateFontInfo GetFont() const;
 	FString GetUnicodeCharacterName(int32 CharCode);
 	TSharedPtr<SUbCheckBoxList> MakeRangeSelector();
-	TSharedPtr<SWidget> MakeRangeWidget(FUnicodeBlockRange Range) const;
+	void MakeRangeWidget(FUnicodeBlockRange Range);
 	void PopulateSupportedCharacters();
 	void RebuildGridColumns(::FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const;
+
+	
+	void UpdateFromFont();
 };
+
+
 class SUnicodeCharacterInfo: public SCompoundWidget
 {
 public:
