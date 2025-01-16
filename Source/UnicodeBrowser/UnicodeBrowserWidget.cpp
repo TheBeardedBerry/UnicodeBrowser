@@ -11,7 +11,6 @@
 #include "Components/VerticalBox.h"
 
 #include "Editor/PropertyEditor/Private/Presentation/PropertyEditor/PropertyEditor.h"
-#include "Engine/Font.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Fonts/UnicodeBlockRange.h"
