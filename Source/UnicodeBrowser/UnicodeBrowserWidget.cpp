@@ -24,6 +24,7 @@
 #include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
 
 #include "Widgets/SInvalidationPanel.h"
+#include "Widgets/UnicodeCharacterInfo.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SGridPanel.h"
@@ -205,85 +206,6 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 	}
 }
 
-void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
-{
-	Row = InArgs._Row;
-	ChildSlot
-	[
-		SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("Codepoint: 0x%04X"), Row.Get()->Codepoint));
-				}
-			)
-		]
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("Can Load: %s"), *LexToString(Row.Get()->bCanLoadCodepoint)));
-				}
-			)
-		]
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("Size: %s"), *Row.Get()->Measurements.ToString()));
-				}
-			)
-		]
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("Font: %s"), *Row.Get()->FontData.GetFontFilename()));
-				}
-			)
-		]
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("SubFace Index: %d"), Row.Get()->FontData.GetSubFaceIndex()));
-				}
-			)
-		]
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-			.Text_Lambda(
-				[this]()
-				{
-					return FText::FromString(FString::Printf(TEXT("Scaling Factor: %3.3f"), Row.Get()->ScalingFactor));
-				}
-			)
-		]
-	];
-}
-
-TSharedPtr<FUnicodeBrowserRow> SUnicodeCharacterInfo::GetRow() const
-{
-	return {};
-}
-
-void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
-{
-	Row = InRow;
-	Invalidate(EInvalidateWidgetReason::PaintAndVolatility);
-}
 
 void SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range)
 {
@@ -319,43 +241,6 @@ void SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range)
 
 	RangeWidgets.Add(Range.Index, RangeWidget);
 	RangeWidgetsGrid.Add(Range.Index, GridPanel);
-}
-
-TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrowserOptions* Options)
-{
-	FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
-	FDetailsViewArgs DetailsViewArgs;
-	DetailsViewArgs.bAllowSearch = false;
-	DetailsViewArgs.bHideSelectionTip = true;
-	DetailsViewArgs.bShowModifiedPropertiesOption = false;
-	DetailsViewArgs.bShowScrollBar = false;
-	DetailsViewArgs.bShowOptions = false;
-	DetailsViewArgs.bShowObjectLabel = false;
-	DetailsViewArgs.bLockable = false;
-	auto FontDetailsView = PropertyEditor.CreateDetailView(DetailsViewArgs);
-	FontDetailsView->SetObject(Options);
-	return FontDetailsView;
-}
-
-void UUnicodeBrowserOptions::PostInitProperties()
-{
-	Super::PostInitProperties();
-	if (!Font.HasValidFont())
-	{
-		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-	}
-}
-
-void UUnicodeBrowserOptions::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	if (!Font.HasValidFont())
-	{
-		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-	}
-	
-	OnChanged.Broadcast();
 }
 
 FReply SUnicodeBrowserWidget::OnOnlySymbolsClicked()
@@ -396,7 +281,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		RangeWidgetsGrid.Reserve(Ranges.Num());
 	}
 	RangeSelector = MakeRangeSelector();
-	CurrentRow = MakeShared<FUnicodeBrowserRow>(); // create a dummy for the preview until the user highlights a character
+	CurrentRow = MakeShared<FUnicodeBrowserRow>(0, EUnicodeBlockRange::ControlCharacter); // create a dummy for the preview until the user highlights a character
 	
 	ChildSlot
 	[
@@ -560,7 +445,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	}
 }
 
-void SUnicodeBrowserWidget::UpdateFromFont()
+void SUnicodeBrowserWidget::UpdateFromFont(struct FPropertyChangedEvent* PropertyChangedEvent)
 {
 	// rebuild the character list
 	PopulateSupportedCharacters();
@@ -586,11 +471,6 @@ void SUnicodeBrowserWidget::UpdateFromFont()
 
 void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 {
-	FSlateFontInfo const FontInfo = Options->Font;
-	TSharedRef<FSlateFontMeasure> const FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
-	TSharedRef<FSlateFontCache> const FontCache = FSlateApplication::Get().GetRenderer()->GetFontCache();
-
-	
 	Rows.Empty();
 	Rows.Reserve(Ranges.Num());
 	
@@ -600,24 +480,12 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 		TArray<TSharedPtr<FUnicodeBrowserRow>> &RangeArray = Rows.FindChecked(Range.Index);
 		
 		for (int CharCode = Range.Range.GetLowerBound().GetValue(); CharCode <= Range.Range.GetUpperBound().GetValue(); ++CharCode)
-		{				
-			auto Row = MakeShared<FUnicodeBrowserRow>(CharCode, Range.Index);
-			Row->FontData = FontCache->GetFontDataForCodepoint(FontInfo, CharCode, Row->ScalingFactor);
-
-			// this could be lazy evaluated (e.g. only when the filter is active or when the character is displayed in the preview)
-			Row->bCanLoadCodepoint = FontCache->CanLoadCodepoint(Row->FontData, CharCode);
-			if(!Options->bShowMissing && !Row->bCanLoadCodepoint){
-				continue;
+		{
+			auto Row = MakeShared<FUnicodeBrowserRow>(CharCode, Range.Index, &Options->Font);
+			if(Options->bShowMissing || Row->CanLoadCodepoint())
+			{
+				RangeArray.Add(Row);
 			}
-
-			// this could be lazy evaluated (e.g. only when the filter is active or when the character is displayed in the preview)
-			FUnicodeChar::CodepointToString(CharCode, Row->Character);			
-			Row->Measurements = FontMeasureService->Measure(*Row->Character, FontInfo);
-			if(!Options->bShowZeroSize && Row->Measurements.IsZero()){
-				continue;
-			}
-
-			RangeArray.Add(Row);
 		}
 	}
 }

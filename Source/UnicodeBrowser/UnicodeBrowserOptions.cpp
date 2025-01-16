@@ -1,0 +1,41 @@
+// all rights reserved
+
+
+#include "UnicodeBrowserOptions.h"
+
+TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrowserOptions* Options)
+{
+	FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	FDetailsViewArgs DetailsViewArgs;
+	DetailsViewArgs.bAllowSearch = false;
+	DetailsViewArgs.bHideSelectionTip = true;
+	DetailsViewArgs.bShowModifiedPropertiesOption = false;
+	DetailsViewArgs.bShowScrollBar = false;
+	DetailsViewArgs.bShowOptions = false;
+	DetailsViewArgs.bShowObjectLabel = false;
+	DetailsViewArgs.bLockable = false;
+	auto FontDetailsView = PropertyEditor.CreateDetailView(DetailsViewArgs);
+	FontDetailsView->SetObject(Options);
+	return FontDetailsView;
+}
+
+void UUnicodeBrowserOptions::PostInitProperties()
+{
+	Super::PostInitProperties();
+	if (!Font.HasValidFont())
+	{
+		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	}
+}
+
+void UUnicodeBrowserOptions::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (!Font.HasValidFont())
+	{
+		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	}
+	
+	OnChanged.Broadcast(&PropertyChangedEvent);
+}
