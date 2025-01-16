@@ -41,8 +41,10 @@ class FUnicodeBrowserRow : public TSharedFromThis<FUnicodeBrowserRow>
 public:
 	FUnicodeBrowserRow() = default;
 
+	FUnicodeBrowserRow(int32 CodePointIn, TOptional<EUnicodeBlockRange> BlockRangeIn) : Codepoint(CodePointIn), BlockRange(BlockRangeIn) {}
+
 	int32 Codepoint = 0;
-	FString Character;
+	FString Character = "";
 	TOptional<EUnicodeBlockRange> BlockRange;
 	FFontData FontData;
 	float ScalingFactor = 1.0f;
@@ -100,19 +102,14 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(FArguments const& InArgs);
-
 	
 protected:
-	TMap<uint32, FString> SupportedCharacters;
+	TArrayView<FUnicodeBlockRange const> Ranges; // all known unicode ranges
 	
-	
-	TArray<TSharedPtr<FUnicodeBrowserRow>> Rows;
-	TMap<EUnicodeBlockRange, int32> RangeCharacterCount;
-	
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;	
 	TMap<EUnicodeBlockRange, TSharedPtr<SExpandableArea>> RangeWidgets;
 	TMap<EUnicodeBlockRange, TSharedPtr<SUniformGridPanel>> RangeWidgetsGrid;
-	TArrayView<FUnicodeBlockRange const> Ranges;
-	TMap<EUnicodeBlockRange const, int32 const> RangeIndices;
+	TMap<EUnicodeBlockRange const, int32 const> RangeIndices; // range <> SUbCheckBoxList index 
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
