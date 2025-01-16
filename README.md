@@ -67,6 +67,10 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 * Settings page for adding new presets
 * Your suggestions?
 
+# Thanks
+
+* [ben-mkiv](https://github.com/ben-mkiv) For early testing, feedback and PR [#1](https://github.com/ntystudio/UnicodeBrowser/pull/1)
+
 # License
 
 MIT
