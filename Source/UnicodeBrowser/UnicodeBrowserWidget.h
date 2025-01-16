@@ -34,7 +34,7 @@ namespace UnicodeBrowser
 		);
 	}
 
-	static TArray<EUnicodeBlockRange> SymbolRanges {
+	static TArray<EUnicodeBlockRange> SymbolRanges = {
 		EUnicodeBlockRange::Arrows,
 		EUnicodeBlockRange::BlockElements,
 		EUnicodeBlockRange::BoxDrawing,
