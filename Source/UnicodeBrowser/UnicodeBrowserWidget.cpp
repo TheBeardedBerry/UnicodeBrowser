@@ -65,6 +65,15 @@ TArrayView<FUnicodeBlockRange const> UnicodeBrowser::GetUnicodeBlockRanges()
 	return BlockRange;
 }
 
+int32 UnicodeBrowser::GetRangeIndex(EUnicodeBlockRange BlockRange)
+{
+	return GetUnicodeBlockRanges().IndexOfByPredicate(
+		[BlockRange](FUnicodeBlockRange const& Range)
+		{
+			return Range.Index == BlockRange;
+		}
+	);
+}
 
 TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector()
 {
@@ -108,7 +117,7 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 	if (CurrentRow == Row) return FReply::Unhandled();
 	CurrentRow = Row;
 	CurrentCharacterView->SetText(FText::FromString(CurrentRow->Character));
-	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: 0x%04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
+	CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)));
 	return FReply::Handled();
 }
 
@@ -161,7 +170,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
 					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: 0x%04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
 				];
 
@@ -306,7 +315,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 						.Font(this, &SUnicodeBrowserWidget::GetFont)
 						.Justification(ETextJustify::Center)
 						.IsEnabled(true)
-						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: %04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
+						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
 						.Text(FText::FromString(FString::Printf(TEXT("%s"), *CurrentRow->Character)))
 					]
 				]
@@ -474,10 +483,6 @@ FString SUnicodeBrowserWidget::GetUnicodeCharacterName(int32 const CharCode)
 {
 	UChar32 const uChar = static_cast<UChar32>(CharCode);
 	UErrorCode errorCode = U_ZERO_ERROR;
-	// uint32 bufferSize = 256;
-	// char *name= (char *)uprv_malloc(bufferSize*sizeof(char));
-	// (char *)uprv_malloc(bufferSize*sizeof(char));
-	// char name[256];
 	char* name = new char[256];
 
 	// Get the Unicode character name using ICU

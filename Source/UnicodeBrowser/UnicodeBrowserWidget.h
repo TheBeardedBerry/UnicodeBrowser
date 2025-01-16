@@ -11,7 +11,7 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SListView.h"
 
-
+class SExpandableArea;
 class UFont;
 class SScrollBox;
 class SUbCheckBoxList;
@@ -20,19 +20,11 @@ class SUniformGridPanel;
 
 namespace UnicodeBrowser
 {
-	inline TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
+	TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
 
 	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 
-	inline int32 GetRangeIndex(EUnicodeBlockRange BlockRange)
-	{
-		return GetUnicodeBlockRanges().IndexOfByPredicate(
-			[BlockRange](FUnicodeBlockRange const& Range)
-			{
-				return Range.Index == BlockRange;
-			}
-		);
-	}
+	int32 GetRangeIndex(EUnicodeBlockRange BlockRange);
 
 	static TArray<EUnicodeBlockRange> SymbolRanges = {
 		EUnicodeBlockRange::Arrows,
@@ -69,7 +61,7 @@ public:
 	void Construct(FArguments const& InArgs);
 	
 protected:
-	TArrayView<FUnicodeBlockRange const> Ranges; // all known unicode ranges
+	TArrayView<FUnicodeBlockRange const> Ranges; // all known Unicode ranges
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;	
 	TMap<EUnicodeBlockRange, TSharedPtr<SExpandableArea>> RangeWidgets;
 	TMap<EUnicodeBlockRange, TSharedPtr<SUniformGridPanel>> RangeWidgetsGrid;
