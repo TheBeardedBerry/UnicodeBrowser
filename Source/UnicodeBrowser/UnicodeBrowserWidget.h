@@ -34,7 +34,30 @@ namespace UnicodeBrowser
 		);
 	}
 
-	static TArray<EUnicodeBlockRange> GetSymbolRanges();
+	static TArray<EUnicodeBlockRange> SymbolRanges {
+		EUnicodeBlockRange::Arrows,
+		EUnicodeBlockRange::BlockElements,
+		EUnicodeBlockRange::BoxDrawing,
+		EUnicodeBlockRange::CurrencySymbols,
+		EUnicodeBlockRange::Dingbats,
+		EUnicodeBlockRange::EmoticonsEmoji,
+		EUnicodeBlockRange::EnclosedAlphanumericSupplement,
+		EUnicodeBlockRange::EnclosedAlphanumerics,
+		EUnicodeBlockRange::GeneralPunctuation,
+		EUnicodeBlockRange::GeometricShapes,
+		EUnicodeBlockRange::Latin1Supplement,
+		EUnicodeBlockRange::LatinExtendedB,
+		EUnicodeBlockRange::MathematicalAlphanumericSymbols,
+		EUnicodeBlockRange::MathematicalOperators,
+		EUnicodeBlockRange::MiscellaneousMathematicalSymbolsB,
+		EUnicodeBlockRange::MiscellaneousSymbols,
+		EUnicodeBlockRange::MiscellaneousSymbolsAndArrows,
+		EUnicodeBlockRange::MiscellaneousSymbolsAndPictographs,
+		EUnicodeBlockRange::MiscellaneousTechnical,
+		EUnicodeBlockRange::NumberForms,
+		EUnicodeBlockRange::SupplementalSymbolsAndPictographs,
+		EUnicodeBlockRange::TransportAndMapSymbols
+	};
 }
 
 class SUnicodeBrowserWidget : public SCompoundWidget

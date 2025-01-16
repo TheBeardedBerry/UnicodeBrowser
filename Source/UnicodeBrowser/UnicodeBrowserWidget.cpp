@@ -65,33 +65,6 @@ TArrayView<FUnicodeBlockRange const> UnicodeBrowser::GetUnicodeBlockRanges()
 	return BlockRange;
 }
 
-TArray<EUnicodeBlockRange> UnicodeBrowser::GetSymbolRanges()
-{
-	TArray<EUnicodeBlockRange> SymbolRanges;
-	SymbolRanges.Add(EUnicodeBlockRange::Arrows);
-	SymbolRanges.Add(EUnicodeBlockRange::BlockElements);
-	SymbolRanges.Add(EUnicodeBlockRange::BoxDrawing);
-	SymbolRanges.Add(EUnicodeBlockRange::CurrencySymbols);
-	SymbolRanges.Add(EUnicodeBlockRange::Dingbats);
-	SymbolRanges.Add(EUnicodeBlockRange::EmoticonsEmoji);
-	SymbolRanges.Add(EUnicodeBlockRange::EnclosedAlphanumericSupplement);
-	SymbolRanges.Add(EUnicodeBlockRange::EnclosedAlphanumerics);
-	SymbolRanges.Add(EUnicodeBlockRange::GeneralPunctuation);
-	SymbolRanges.Add(EUnicodeBlockRange::GeometricShapes);
-	SymbolRanges.Add(EUnicodeBlockRange::Latin1Supplement);
-	SymbolRanges.Add(EUnicodeBlockRange::LatinExtendedB);
-	SymbolRanges.Add(EUnicodeBlockRange::MathematicalAlphanumericSymbols);
-	SymbolRanges.Add(EUnicodeBlockRange::MathematicalOperators);
-	SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousMathematicalSymbolsB);
-	SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousSymbols);
-	SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousSymbolsAndArrows);
-	SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousSymbolsAndPictographs);
-	SymbolRanges.Add(EUnicodeBlockRange::MiscellaneousTechnical);
-	SymbolRanges.Add(EUnicodeBlockRange::NumberForms);
-	SymbolRanges.Add(EUnicodeBlockRange::SupplementalSymbolsAndPictographs);
-	SymbolRanges.Add(EUnicodeBlockRange::TransportAndMapSymbols);
-	return SymbolRanges;
-}
 
 TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector()
 {
@@ -246,7 +219,7 @@ void SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range)
 FReply SUnicodeBrowserWidget::OnOnlySymbolsClicked()
 {
 	RangeSelector->UncheckAll();
-	for (auto const SymbolRange : UnicodeBrowser::GetSymbolRanges())
+	for (auto const SymbolRange : UnicodeBrowser::SymbolRanges)
 	{
 		int32 const Index = RangeIndices[SymbolRange];
 		RangeSelector->SetItemChecked(Index, ECheckBoxState::Checked);
