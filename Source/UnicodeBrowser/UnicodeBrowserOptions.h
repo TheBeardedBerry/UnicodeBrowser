@@ -3,7 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "Styling/CoreStyle.h"
+
 #include "UObject/Object.h"
+
 #include "UnicodeBrowserOptions.generated.h"
 
 /**

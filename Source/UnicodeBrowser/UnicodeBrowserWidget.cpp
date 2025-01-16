@@ -6,13 +6,10 @@
 #include "SSimpleButton.h"
 #include "SlateOptMacros.h"
 
-#include "Algo/Count.h"
-
 #include "Components/VerticalBox.h"
 
 #include "Editor/PropertyEditor/Private/Presentation/PropertyEditor/PropertyEditor.h"
 
-#include "Fonts/FontMeasure.h"
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Framework/Application/SlateApplication.h"

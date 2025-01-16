@@ -1,6 +1,6 @@
 #pragma once
-#include "Fonts/UnicodeBlockRange.h"
 #include "Fonts/FontMeasure.h"
+#include "Fonts/UnicodeBlockRange.h"
 
 class FUnicodeBrowserRow : public TSharedFromThis<FUnicodeBrowserRow>
 {
@@ -22,8 +22,8 @@ private:
 	TOptional<bool> bCanLoadCodepoint;
 
 	
-public:	
-	const FFontData* GetFontData()
+public:
+	FFontData const* GetFontData()
 	{
 		if(!FontData && FontInfo)
 		{
