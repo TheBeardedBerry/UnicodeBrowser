@@ -26,9 +26,11 @@ Open Window via `Window -> Unicode Browser`
 * Displays a grid of all characters mapped to a named Unicode Block. (See [UnicodeBlockRange.inl](https://github.com/EpicGames/UnrealEngine/blob/585df42eb3a391efd295abd231333df20cddbcf3/Engine/Source/Runtime/SlateCore/Public/Fonts/UnicodeBlockRange.inl) in Editor Source.).
 * Filter displayed characters by Block.
 * Lists all named Unicode Blocks that have mapped characters.
-* Shows zoomed-in view of the character when hovering over it.
+* Shows zoomed-in view of the character, and additional information when hovering over it.
+* Character information: measurements, scaling, subfont index, fallback font used, if any.
 * Ability to filter blocks to "only symbols"; preselects Blocks known to have useful, supported symbols e.g. Arrows, Box Drawing, Emoji.
 * Ability to change font.
+* Show/hide missing characters
 * **Double-click a character to copy it to the system clipboard**.
 * Click a block name to scroll to that block.
 
@@ -61,9 +63,7 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 * Figure out how to successfully read character names from the icu db e.g. ⚔ -> "Crossed Swords". Currently calling [u_charname](https://github.com/unicode-org/icu/blob/f8aa68b0c1c9584633e7a61157185f1a2c275f58/icu4c/source/common/unames.cpp#L1450) gives me a `u_file_access_error`. Names would be particularly useful for characters which don't display correctly. 
 * Use the character names as a starting point to getting useful search e.g. [see this example](https://www.compart.com/en/unicode/search?q=cross#characters)
 * Block search & filtering (e.g. hide unchecked languages by default)
-* Figure out how to detect �, ￼ et al., so they can be (optionally) filtered out.
 * Persist window state
-* Improve initial load time
 * Settings page for adding new presets
 * Your suggestions?
 
