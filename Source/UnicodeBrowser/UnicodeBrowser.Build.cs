@@ -60,6 +60,5 @@ public class UnicodeBrowser : ModuleRules
 			}
 		);
 		PublicDefinitions.Add("UDATA_DEBUG=1");
-		
 	}
 }

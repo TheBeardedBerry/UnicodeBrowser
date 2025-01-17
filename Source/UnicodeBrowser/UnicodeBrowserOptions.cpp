@@ -25,9 +25,9 @@ TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrow
 void UUnicodeBrowserOptions::PostInitProperties()
 {
 	Super::PostInitProperties();
-	if (!Font.HasValidFont())
+	if (!FontInfo.HasValidFont())
 	{
-		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+		FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 	}
 }
 
@@ -35,9 +35,9 @@ void UUnicodeBrowserOptions::PostEditChangeProperty(FPropertyChangedEvent& Prope
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (!Font.HasValidFont())
+	if (!FontInfo.HasValidFont())
 	{
-		Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+		FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 	}
 	
 	OnChanged.Broadcast(&PropertyChangedEvent);
