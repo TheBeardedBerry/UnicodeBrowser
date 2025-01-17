@@ -25,7 +25,7 @@ public:
 	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 
 	UPROPERTY(EditAnywhere)
-	int32 NumCols = 24;
+	int32 NumCols = 16;
 
 	// Show Characters which can't be displayed by the font
 	UPROPERTY(EditAnywhere)
