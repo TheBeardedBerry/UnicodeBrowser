@@ -539,7 +539,7 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 	}
 }
 
-FString SUnicodeBrowserWidget::GetUnicodeCharacterName(int32 const CharCode)
+FString UnicodeBrowser::GetUnicodeCharacterName(int32 const CharCode)
 {
 	UChar32 const uChar = static_cast<UChar32>(CharCode);
 	UErrorCode errorCode = U_ZERO_ERROR;

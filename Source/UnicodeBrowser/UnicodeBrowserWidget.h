@@ -22,6 +22,8 @@ namespace UnicodeBrowser
 {
 	TCHAR constexpr InvalidSubChar = TEXT('\uFFFD');
 	TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
+	
+	static FString GetUnicodeCharacterName(int32 CharCode);
 
 	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 
@@ -91,7 +93,6 @@ protected:
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 
 	FSlateFontInfo GetFontInfo() const;
-	static FString GetUnicodeCharacterName(int32 CharCode);
 
 	TSharedPtr<SExpandableArea> MakeBlockRangesSidebar();
 	TSharedPtr<SUbCheckBoxList> MakeBlockRangeSelector();
