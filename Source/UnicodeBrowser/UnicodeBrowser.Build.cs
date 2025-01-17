@@ -33,7 +33,6 @@ public class UnicodeBrowser : ModuleRules
 		);
 		AddEngineThirdPartyPrivateStaticDependencies(Target, "ICU");
 
-
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{

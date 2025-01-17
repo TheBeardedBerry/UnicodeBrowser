@@ -20,13 +20,14 @@ class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject
 
 public:
 	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
+
 	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient)
 	FSlateFontInfo Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 
 	UPROPERTY(EditAnywhere)
 	int32 NumCols = 24;
 
-	// Show Characters which can't be displayed by the font (primary for debug purposes)
+	// Show Characters which can't be displayed by the font
 	UPROPERTY(EditAnywhere)
 	bool bShowMissing = false;
 
@@ -35,13 +36,12 @@ public:
 	bool bShowZeroSize = false;
 
 	// Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, AdvancedDisplay)
 	bool bCacheCharacterMetaOnLoad = false;
 
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, struct FPropertyChangedEvent*);
+	FOnUbOptionsChangedDelegate OnChanged;
+
 	virtual void PostInitProperties() override;
-
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnNumColsChangedDelegate, struct FPropertyChangedEvent*);
-	FOnNumColsChangedDelegate OnChanged;
 };
