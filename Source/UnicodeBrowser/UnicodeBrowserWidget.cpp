@@ -14,6 +14,7 @@
 #include "Modules/ModuleManager.h"
 
 #include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
+#include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/SUnicodeRangeWidget.h"
 
 #include "Widgets/UnicodeCharacterInfo.h"
@@ -122,28 +123,11 @@ void SUnicodeBrowserWidget::RebuildGrid(FUnicodeBlockRange const Range, TSharedR
 		if (!RowEntries.IsValidIndex(i)) continue;
 
 		auto const Row = RowEntries[i];
-		TSharedPtr<SCompoundWidget> GridCell;
-		if (!RowCellWidgetCache.Contains(Row->Codepoint))
-		{
-			GridCell = SNew(SBorder)
-				.BorderImage(nullptr)
-				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row)
-				[
-					SNew(STextBlock)
-					.Font(this, &SUnicodeBrowserWidget::GetFontInfo)
-					.IsEnabled(true)
-					.Justification(ETextJustify::Center)
-					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
-					.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
-				];
-
-			RowCellWidgetCache.Add(Row->Codepoint, GridCell.ToSharedRef());
-		}
-		else
-		{
-			GridCell = RowCellWidgetCache[Row->Codepoint];
-		}
+		TSharedPtr<SUnicodeCharacterGridEntry> GridCell = SNew(SUnicodeCharacterGridEntry)
+				.FontInfo(GetFontInfo())
+				.UnicodeCharacter(Row)
+				.OnMouseDoubleClick(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
+				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row);
 
 		Slot
 		[

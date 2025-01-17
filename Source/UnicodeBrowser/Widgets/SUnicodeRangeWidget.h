@@ -15,7 +15,6 @@ class UNICODEBROWSER_API SUnicodeRangeWidget : public SExpandableArea
 public:
 	SLATE_BEGIN_ARGS(SUnicodeRangeWidget)
 		{}
-	//SLATE_ARGUMENT(SExpandableArea::FArguments, ParentArgs) 
 	SLATE_ATTRIBUTE(FUnicodeBlockRange, Range);
 	SLATE_END_ARGS()
 

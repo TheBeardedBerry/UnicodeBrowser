@@ -9,6 +9,7 @@
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/SUnicodeRangeWidget.h"
 #include "Widgets/Views/SListView.h"
 
@@ -79,7 +80,6 @@ protected:
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
 	TSharedPtr<SExpandableArea> BlockRangesSidebar;
 	bool bDirty = true;
-	mutable TMap<int32, TSharedRef<SCompoundWidget>> RowCellWidgetCache;
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
 
 protected:
