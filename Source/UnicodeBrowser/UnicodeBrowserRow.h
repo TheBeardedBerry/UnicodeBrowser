@@ -75,6 +75,17 @@ public:
 		return ScalingFactor.Get(0.0f);
 	}
 
+	// preload cached data
+	void Preload() const
+	{
+		// ReSharper disable once CppExpressionWithoutSideEffects
+		GetMeasurements();
+		// ReSharper disable once CppExpressionWithoutSideEffects
+		CanLoadCodepoint();
+		// ReSharper disable once CppExpressionWithoutSideEffects
+		GetFontData();
+	}
+
 	friend bool operator==(FUnicodeBrowserRow const& Lhs, FUnicodeBrowserRow const& RHS)
 	{
 		return Lhs.Codepoint == RHS.Codepoint

@@ -21,8 +21,8 @@ class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject
 public:
 	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
 
-	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient)
-	FSlateFontInfo Font = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient, DisplayName="Font")
+	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 
 	UPROPERTY(EditAnywhere)
 	int32 NumCols = 24;
