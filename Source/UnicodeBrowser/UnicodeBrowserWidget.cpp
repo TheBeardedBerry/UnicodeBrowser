@@ -15,7 +15,6 @@
 
 #include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
 
-#include "Widgets/SInvalidationPanel.h"
 #include "Widgets/UnicodeCharacterInfo.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SExpandableArea.h"

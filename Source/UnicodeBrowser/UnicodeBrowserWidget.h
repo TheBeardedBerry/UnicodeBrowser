@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SCheckBoxList.h"
 #include "UnicodeBrowserOptions.h"
 #include "UnicodeBrowserRow.h"
 
