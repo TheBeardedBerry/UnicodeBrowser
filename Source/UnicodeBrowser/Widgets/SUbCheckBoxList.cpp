@@ -156,10 +156,8 @@ void SUbCheckBoxList::UncheckAll()
 {
 	for (int32 Index = 0; Index < Items.Num(); ++Index)
 	{
-		Index++;
 		SetItemChecked(Index, ECheckBoxState::Unchecked);
 	}
-	ListView->RebuildList();
 }
 
 void SUbCheckBoxList::RemoveAll()
