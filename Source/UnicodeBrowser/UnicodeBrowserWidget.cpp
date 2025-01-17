@@ -381,7 +381,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 
 void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 {	
-	Options->FontInfo.Size += Offset;
+	Options->FontInfo.Size = FMath::Max(1.0f, Options->FontInfo.Size + Offset);
 
 	// update each entry with the new fontsize
 	for(auto &[Range, RangeWidget] : RangeWidgets)
@@ -396,7 +396,7 @@ void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 void SUnicodeBrowserWidget::HandleZoomColumns(float Offset)
 {
 	// we want inverted behavior for columns
-	Options->NumCols -= Offset;
+	Options->NumCols = FMath::Max(1, FMath::RoundToInt(Options->NumCols - Offset));
 	
 	RebuildGrid();
 }
