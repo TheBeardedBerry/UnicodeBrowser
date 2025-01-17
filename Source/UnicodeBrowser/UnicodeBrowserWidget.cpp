@@ -14,6 +14,7 @@
 #include "Modules/ModuleManager.h"
 
 #include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
+#include "Widgets/SUnicodeRangeWidget.h"
 
 #include "Widgets/UnicodeCharacterInfo.h"
 #include "Widgets/Input/SButton.h"
@@ -151,35 +152,6 @@ void SUnicodeBrowserWidget::RebuildGrid(FUnicodeBlockRange const Range, TSharedR
 	}
 }
 
-void SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range)
-{
-	TSharedPtr<SUniformGridPanel> GridPanel;
-
-	auto const RangeWidget = SNew(SExpandableArea)
-		// Visibility updated on range selection change with UpdateRangeVisibility
-		.Visibility(RangeSelector->IsItemChecked(CheckboxIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed)
-		.HeaderPadding(FMargin(2, 4))
-		.HeaderContent()
-		[
-			SNew(STextBlock)
-			.Text(Range.DisplayName)
-		]
-		.BodyContent()
-		[
-			SNew(SScaleBox)
-			.Stretch(EStretch::ScaleToFit)
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			[
-				SAssignNew(GridPanel, SUniformGridPanel)
-				.SlotPadding(FMargin(6.f, 4.f))
-			]
-		];
-
-	RangeWidgets.Add(Range.Index, RangeWidget);
-	RangeWidgetsGrid.Add(Range.Index, GridPanel);
-}
-
 TSharedPtr<SExpandableArea> SUnicodeBrowserWidget::MakeBlockRangesSidebar()
 {
 	return SNew(SExpandableArea)
@@ -299,11 +271,9 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	{
 		Ranges = UnicodeBrowser::GetUnicodeBlockRanges();
 		RangeWidgets.Reset();
-		RangeWidgetsGrid.Reset();
 		CheckboxIndices.Reset();
 		RangeWidgets.Reserve(Ranges.Num());
 		CheckboxIndices.Reserve(Ranges.Num());
-		RangeWidgetsGrid.Reserve(Ranges.Num());
 		// note character/font data isn't initialized until first tick after construction
 		// this permits the browser panel to display earlier
 		MarkDirty();
@@ -338,7 +308,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.VAlign(VAlign_Fill)
 				.HAlign(HAlign_Fill)
 				[
-					SAssignNew(RangeScrollbox, SScrollBox)
+				SAssignNew(RangeScrollbox, SScrollBox)
 				]
 			]
 			+ SSplitter::Slot()
@@ -432,7 +402,10 @@ void SUnicodeBrowserWidget::Update()
 		// create the range widgets for the first time
 		for (auto const& Range : Ranges)
 		{
-			MakeRangeWidget(Range);
+			RangeWidgets.Add(Range.Index,
+				SNew(SUnicodeRangeWidget)
+					.Range(Range)
+					.Visibility(RangeSelector->IsItemChecked(CheckboxIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed));
 		}
 		for (auto const& RangeWidget : RangeWidgets)
 		{
@@ -449,9 +422,9 @@ void SUnicodeBrowserWidget::Update()
 	// rebuild the grid
 	for (auto const& Range : Ranges)
 	{
-		if (auto const GridPanel = RangeWidgetsGrid.Find(Range.Index))
+		if (const auto RangeWidget = RangeWidgets.Find(Range.Index))
 		{
-			RebuildGrid(Range, GridPanel->ToSharedRef());
+			RebuildGrid(Range, RangeWidget->Get()->GetGridPanel());
 		}
 	}
 }

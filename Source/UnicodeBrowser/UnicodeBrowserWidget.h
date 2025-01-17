@@ -9,6 +9,7 @@
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/SUnicodeRangeWidget.h"
 #include "Widgets/Views/SListView.h"
 
 class SExpandableArea;
@@ -70,8 +71,7 @@ protected:
 	TArrayView<FUnicodeBlockRange const> Ranges; // all known Unicode ranges
 	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index 
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
-	TMap<EUnicodeBlockRange, TSharedPtr<SExpandableArea>> RangeWidgets;
-	TMap<EUnicodeBlockRange, TSharedPtr<SUniformGridPanel>> RangeWidgetsGrid;
+	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	TSharedPtr<IDetailsView> FontDetailsView;
 	TSharedPtr<SScrollBox> RangeScrollbox;
@@ -97,7 +97,6 @@ protected:
 	TSharedPtr<SExpandableArea> MakeBlockRangesSidebar();
 	TSharedPtr<SUbCheckBoxList> MakeBlockRangeSelector();
 
-	void MakeRangeWidget(FUnicodeBlockRange Range);
 	void PopulateSupportedCharacters();
 	void RebuildGrid(FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const;
 	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
