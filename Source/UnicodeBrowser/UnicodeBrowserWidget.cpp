@@ -98,7 +98,7 @@ TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeRangeSelector()
 			.OnClicked(this, &SUnicodeBrowserWidget::OnRangeClicked, Range.Index);
 
 		int32 Index = CheckBoxList->AddItem(ItemWidget, false);
-		RangeIndices.Add(Range.Index, Index);
+		CheckboxIndices.Add(Range.Index, Index);
 	}
 
 	return CheckBoxList;
@@ -108,7 +108,7 @@ FReply SUnicodeBrowserWidget::OnRangeClicked(EUnicodeBlockRange const BlockRange
 {
 	if (RangeScrollbox.IsValid())
 	{
-		if (!RangeIndices.Contains(BlockRange)) return FReply::Unhandled();
+		if (!CheckboxIndices.Contains(BlockRange)) return FReply::Unhandled();
 		if (!RangeWidgets.Contains(BlockRange)) return FReply::Unhandled();
 		auto const RangeWidget = RangeWidgets.FindChecked(BlockRange);
 		RangeScrollbox->ScrollDescendantIntoView(RangeWidget);
@@ -147,10 +147,7 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 {
 	GridPanel->ClearChildren();
 
-	if (!Rows.Contains(Range.Index))
-	{
-		return;
-	}
+	if (!Rows.Contains(Range.Index)) return;
 
 	auto const NumCols = Options->NumCols;
 	GridPanel->SetMinDesiredSlotHeight(Options->Font.Size * 2);
@@ -170,13 +167,12 @@ void SUnicodeBrowserWidget::RebuildGridColumns(FUnicodeBlockRange const Range, T
 				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row)
 				[
 					SNew(STextBlock)
-					.Visibility(EVisibility::Visible)
-					.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
 					.Font(this, &SUnicodeBrowserWidget::GetFont)
-					.Justification(ETextJustify::Center)
 					.IsEnabled(true)
-					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.Justification(ETextJustify::Center)
 					.Text(FText::FromString(FString::Printf(TEXT("%s"), *Row->Character)))
+					.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), Row->Codepoint, *Row->Character)))
+					.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
 				];
 
 			RowWidgetTextCache.Add(Row->Codepoint, TextBlock.ToSharedRef());
@@ -200,12 +196,12 @@ void SUnicodeBrowserWidget::MakeRangeWidget(FUnicodeBlockRange const Range)
 
 	RebuildGridColumns(Range, GridPanel);
 
-	auto RangeWidget = SNew(SExpandableArea)
+	auto const RangeWidget = SNew(SExpandableArea)
 		.Visibility_Lambda(
 			[RangeIndex = Range.Index, this]()
 			{
 				if (!RangeSelector->GetNumCheckboxes()) return EVisibility::Collapsed;
-				return RangeSelector->IsItemChecked(RangeIndices[RangeIndex]) ? EVisibility::Visible : EVisibility::Collapsed;
+				return RangeSelector->IsItemChecked(CheckboxIndices[RangeIndex]) ? EVisibility::Visible : EVisibility::Collapsed;
 			}
 		)
 		.HeaderPadding(FMargin(2, 4))
@@ -234,9 +230,15 @@ FReply SUnicodeBrowserWidget::OnOnlySymbolsClicked()
 	RangeSelector->UncheckAll();
 	for (auto const SymbolRange : UnicodeBrowser::SymbolRanges)
 	{
-		int32 const Index = RangeIndices[SymbolRange];
+		int32 const Index = CheckboxIndices[SymbolRange];
 		RangeSelector->SetItemChecked(Index, ECheckBoxState::Checked);
 	}
+	return FReply::Handled();
+}
+
+FReply SUnicodeBrowserWidget::OnOnlyBlocksWithCharactersClicked() const
+{
+	SelectAllRangesWithCharacters();
 	return FReply::Handled();
 }
 
@@ -249,11 +251,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		FontDetailsView = UUnicodeBrowserOptions::MakePropertyEditor(Options);
 	}
 
-	// IDK if Construct may be called multiple times, so this will prevent several 
-	if (!Options->OnChanged.IsBound())
-	{
-		Options->OnChanged.AddRaw(this, &SUnicodeBrowserWidget::UpdateFromFont);
-	}
+	Options->OnChanged.AddSP(this, &SUnicodeBrowserWidget::UpdateFromFont);
 
 	bool const bInit = !Rows.IsEmpty();
 	if (!bInit)
@@ -262,13 +260,13 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		PopulateSupportedCharacters();
 		RangeWidgets.Reset();
 		RangeWidgetsGrid.Reset();
-		RangeIndices.Reset();
+		CheckboxIndices.Reset();
 		RangeWidgets.Reserve(Ranges.Num());
-		RangeIndices.Reserve(Ranges.Num());
+		CheckboxIndices.Reserve(Ranges.Num());
 		RangeWidgetsGrid.Reserve(Ranges.Num());
 	}
 	RangeSelector = MakeRangeSelector();
-	CurrentRow = MakeShared<FUnicodeBrowserRow>(0, EUnicodeBlockRange::ControlCharacter); // create a dummy for the preview until the user highlights a character
+	CurrentRow = MakeShared<FUnicodeBrowserRow>(65533, EUnicodeBlockRange::Specials); // create a dummy for the preview until the user highlights a character
 
 	ChildSlot
 	[
@@ -384,7 +382,19 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 							.HAlign(HAlign_Center)
 							[
 								SNew(SButton)
-								.Text(FText::FromString(TEXT("Preset: Only Symbol Blocks")))
+								.Text(FText::FromString(TEXT("Preset: Blocks with Characters")))
+								.HAlign(HAlign_Center)
+								.VAlign(VAlign_Center)
+								.OnClicked(this, &SUnicodeBrowserWidget::OnOnlyBlocksWithCharactersClicked)
+							]
+							+ SVerticalBox::Slot()
+							.AutoHeight()
+							.VAlign(VAlign_Center)
+							.Padding(0, 4)
+							.HAlign(HAlign_Center)
+							[
+								SNew(SButton)
+								.Text(FText::FromString(TEXT("Preset: Symbols")))
 								.HAlign(HAlign_Center)
 								.VAlign(VAlign_Center)
 								.OnClicked(this, &SUnicodeBrowserWidget::OnOnlySymbolsClicked)
@@ -440,19 +450,22 @@ void SUnicodeBrowserWidget::UpdateFromFont(struct FPropertyChangedEvent* Propert
 	// rebuild the grid
 	for (auto const& Range : Ranges)
 	{
-		if (auto GridPanel = RangeWidgetsGrid.Find(Range.Index))
+		if (auto const GridPanel = RangeWidgetsGrid.Find(Range.Index))
 		{
 			RebuildGridColumns(Range, GridPanel->ToSharedRef());
 		}
 	}
+}
 
-	// set range visibility automatic
+void SUnicodeBrowserWidget::SelectAllRangesWithCharacters() const
+{
+	RangeSelector.Get()->UncheckAll();
 	for (auto const& Range : Ranges)
 	{
-		if (RangeIndices.Contains(Range.Index))
+		if (CheckboxIndices.Contains(Range.Index))
 		{
 			bool const bRangeHasCharacters = Rows.Contains(Range.Index) ? !Rows.FindChecked(Range.Index).IsEmpty() : false;
-			RangeSelector.Get()->SetItemChecked(RangeIndices.FindChecked(Range.Index), bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
+			RangeSelector.Get()->SetItemChecked(CheckboxIndices.FindChecked(Range.Index), bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 		}
 	}
 }
@@ -477,6 +490,8 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 				Row->GetMeasurements();
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				Row->CanLoadCodepoint();
+				// ReSharper disable once CppExpressionWithoutSideEffects
+				Row->GetFontData();
 			}
 
 			if (Options->bShowMissing || Row->CanLoadCodepoint())

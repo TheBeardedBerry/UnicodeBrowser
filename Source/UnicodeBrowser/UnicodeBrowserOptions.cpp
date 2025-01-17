@@ -1,7 +1,10 @@
-// all rights reserved
-
+// SPDX-FileCopyrightText: 2025 NTY.studio
 
 #include "UnicodeBrowserOptions.h"
+
+#include "PropertyEditorModule.h"
+
+#include "Modules/ModuleManager.h"
 
 TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrowserOptions* Options)
 {
@@ -28,7 +31,7 @@ void UUnicodeBrowserOptions::PostInitProperties()
 	}
 }
 
-void UUnicodeBrowserOptions::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void UUnicodeBrowserOptions::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 

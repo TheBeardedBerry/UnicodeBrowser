@@ -3,10 +3,13 @@
 #include "Fonts/FontMeasure.h"
 #include "Fonts/UnicodeBlockRange.h"
 
+#include "Framework/Application/SlateApplication.h"
+
 class FUnicodeBrowserRow : public TSharedFromThis<FUnicodeBrowserRow>
 {
 public:
-	FUnicodeBrowserRow(int32 const CodePointIn, TOptional<EUnicodeBlockRange> BlockRangeIn, FSlateFontInfo const* FontInfoIn = nullptr) : Codepoint(CodePointIn),
+	FUnicodeBrowserRow(int32 const CodePointIn, TOptional<EUnicodeBlockRange> BlockRangeIn, FSlateFontInfo const* FontInfoIn = nullptr) :
+		Codepoint(CodePointIn),
 		BlockRange(BlockRangeIn),
 		FontInfo(FontInfoIn)
 	{
@@ -39,9 +42,12 @@ public:
 
 	bool CanLoadCodepoint() const
 	{
-		if (!bCanLoadCodepoint.IsSet() && GetFontData())
+		if (!bCanLoadCodepoint.IsSet())
 		{
-			bCanLoadCodepoint = FSlateApplication::Get().GetRenderer()->GetFontCache()->CanLoadCodepoint(*FontData, Codepoint);
+			if (FontInfo && ensureAlways(GetFontData()))
+			{
+				bCanLoadCodepoint = FSlateApplication::Get().GetRenderer()->GetFontCache()->CanLoadCodepoint(*FontData, Codepoint);
+			}
 		}
 
 		return bCanLoadCodepoint.Get(false);

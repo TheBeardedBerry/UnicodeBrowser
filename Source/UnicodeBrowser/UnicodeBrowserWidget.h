@@ -65,7 +65,7 @@ protected:
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
 	TMap<EUnicodeBlockRange, TSharedPtr<SExpandableArea>> RangeWidgets;
 	TMap<EUnicodeBlockRange, TSharedPtr<SUniformGridPanel>> RangeWidgetsGrid;
-	TMap<EUnicodeBlockRange const, int32 const> RangeIndices; // range <> SUbCheckBoxList index 
+	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index 
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
@@ -78,6 +78,7 @@ protected:
 	FReply OnCurrentCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent) const;
 	FReply OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const;
 	FReply OnOnlySymbolsClicked();
+	FReply OnOnlyBlocksWithCharactersClicked() const;
 	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 
@@ -89,4 +90,5 @@ protected:
 	void PopulateSupportedCharacters();
 	void RebuildGridColumns(FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const;
 	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
+	void SelectAllRangesWithCharacters() const;
 };
