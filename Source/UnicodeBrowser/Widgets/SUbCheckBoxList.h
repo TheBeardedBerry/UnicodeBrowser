@@ -54,19 +54,21 @@ public:
 	TSharedPtr<SListView<TSharedRef<UbCheckBoxList::FItemPair>>> ListView;
 
 	FOnCheckListItemStateChanged OnItemCheckStateChanged;
-	
+
 public:
-	ECheckBoxState GetToggleSelectedState() const;
+	ECheckBoxState GetAllCheckedState() const;
 	TArray<bool> GetValues() const;
 	TSharedRef<ITableRow> HandleGenerateRow(TSharedRef<UbCheckBoxList::FItemPair> InItem, TSharedRef<STableViewBase> const& OwnerTable);
 	bool IsItemChecked(int32 Index) const;
 	int32 AddItem(FText const& Text, bool bIsChecked);
 	int32 AddItem(TSharedRef<SWidget> Widget, bool bIsChecked);
 	int32 GetNumCheckboxes() const;
-	void OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> const& InItem);
-	void OnToggleSelectedCheckBox(ECheckBoxState InNewState);
+	void OnAllCheckedStateChanged(ECheckBoxState InNewState);
+	void OnItemCheckBoxChanged(TSharedRef<UbCheckBoxList::FItemPair> const& InItem);
+	void OnItemsRebuilt();
 	void RemoveAll();
 	void RemoveItem(int32 Index);
 	void SetItemChecked(int32 Index, ECheckBoxState InNewState);
 	void UncheckAll();
-	void UpdateAllChecked();};
+	void UpdateAllChecked();
+};

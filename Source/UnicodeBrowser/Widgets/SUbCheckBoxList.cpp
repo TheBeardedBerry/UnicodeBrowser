@@ -2,11 +2,15 @@
 
 #include "SUbCheckBoxList.h"
 
+#include "SlateOptMacros.h"
+
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/SListView.h"
 
 #define LOCTEXT_NAMESPACE "SUbCheckBoxList"
+
+BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 namespace UbCheckBoxList
 {
@@ -18,17 +22,17 @@ namespace UbCheckBoxList
 	struct FItemPair
 	{
 		TSharedRef<SWidget> Widget;
-		
+
 		bool bIsChecked;
+
 		FItemPair(TSharedRef<SWidget> const& InWidget, bool const bInChecked)
-			: Widget(InWidget), bIsChecked(bInChecked)
-		{ }
+			: Widget(InWidget), bIsChecked(bInChecked) {}
 	};
 
 	class SItemPair : public SMultiColumnTableRow<TSharedRef<FItemPair>>
 	{
 	public:
-		SLATE_BEGIN_ARGS(SItemPair) { }
+		SLATE_BEGIN_ARGS(SItemPair) {}
 			SLATE_STYLE_ARGUMENT(FCheckBoxStyle, CheckBoxStyle)
 			SLATE_ARGUMENT(FSimpleDelegate, OnCheckUpdated)
 		SLATE_END_ARGS()
@@ -48,9 +52,9 @@ namespace UbCheckBoxList
 			if (ColumnName == ColumnID_CheckBox)
 			{
 				return SNew(SCheckBox)
-				.Style(CheckBoxStyle)
-				.IsChecked(this, &SItemPair::GetToggleSelectedState)
-				.OnCheckStateChanged(this, &SItemPair::OnToggleSelectedCheckBox);
+					.Style(CheckBoxStyle)
+					.IsChecked(this, &SItemPair::GetToggleSelectedState)
+					.OnCheckStateChanged(this, &SItemPair::OnToggleSelectedCheckBox);
 			}
 			else if (ColumnName == ColumnID_Item)
 			{
@@ -67,7 +71,9 @@ namespace UbCheckBoxList
 
 		void OnToggleSelectedCheckBox(ECheckBoxState const InNewState) const
 		{
-			Item->bIsChecked = InNewState == ECheckBoxState::Checked;
+			auto const bNewIsChecked = InNewState == ECheckBoxState::Checked;
+			if (bNewIsChecked == Item->bIsChecked) return;
+			Item->bIsChecked = bNewIsChecked;
 			// ReSharper disable once CppExpressionWithoutSideEffects
 			OnCheckUpdated.ExecuteIfBound();
 		}
@@ -113,8 +119,8 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 		[
 			SNew(SCheckBox)
 			.Style(InArgs._CheckBoxStyle)
-			.IsChecked(this, &SUbCheckBoxList::GetToggleSelectedState)
-			.OnCheckStateChanged(this, &SUbCheckBoxList::OnToggleSelectedCheckBox)
+			.IsChecked(this, &SUbCheckBoxList::GetAllCheckedState)
+			.OnCheckStateChanged(this, &SUbCheckBoxList::OnAllCheckedStateChanged)
 			.Visibility_Lambda([bShowHeaderCheckbox] { return bShowHeaderCheckbox ? EVisibility::Visible : EVisibility::Hidden; })
 		]
 		+ SHeaderRow::Column(UbCheckBoxList::ColumnID_Item)
@@ -128,7 +134,7 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 		.OnGenerateRow(this, &SUbCheckBoxList::HandleGenerateRow)
 		.HeaderRow(HeaderRowWidget)
 		.SelectionMode(ESelectionMode::None)
-		.OnItemsRebuilt(this, &SUbCheckBoxList::UpdateAllChecked)
+		.OnItemsRebuilt(this, &SUbCheckBoxList::OnItemsRebuilt)
 	];
 }
 
@@ -148,12 +154,14 @@ int32 SUbCheckBoxList::AddItem(TSharedRef<SWidget> Widget, bool bIsChecked)
 
 void SUbCheckBoxList::UncheckAll()
 {
-	for (TSharedRef<UbCheckBoxList::FItemPair> const& Item : Items)
+	for (int32 Index = 0; Index < Items.Num(); ++Index)
 	{
-		Item->bIsChecked = false;
+		Index++;
+		SetItemChecked(Index, ECheckBoxState::Unchecked);
 	}
 	ListView->RebuildList();
 }
+
 void SUbCheckBoxList::RemoveAll()
 {
 	Items.Reset();
@@ -196,34 +204,44 @@ void SUbCheckBoxList::UpdateAllChecked()
 	bAllCheckedState = bContainsTrue && bContainsFalse ? ECheckBoxState::Undetermined : (bContainsTrue ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 }
 
-ECheckBoxState SUbCheckBoxList::GetToggleSelectedState() const
+ECheckBoxState SUbCheckBoxList::GetAllCheckedState() const
 {
 	return bAllCheckedState;
 }
 
-void SUbCheckBoxList::OnToggleSelectedCheckBox(ECheckBoxState const InNewState)
+void SUbCheckBoxList::OnAllCheckedStateChanged(ECheckBoxState const InNewState)
 {
 	bool const bNewValue = InNewState == ECheckBoxState::Checked;
-	for (TSharedRef<UbCheckBoxList::FItemPair> const& Item : Items)
+	for (int32 Index = 0; Index < Items.Num(); ++Index)
 	{
-		Item->bIsChecked = bNewValue;
+		SetItemChecked(Index, InNewState);
 	}
 	bAllCheckedState = bNewValue ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-	
+	ListView->RebuildList();
+
 	// ReSharper disable once CppExpressionWithoutSideEffects
 	OnItemCheckStateChanged.ExecuteIfBound(-1);
+}
+
+void SUbCheckBoxList::OnItemsRebuilt()
+{
+	UpdateAllChecked();
 }
 
 void SUbCheckBoxList::SetItemChecked(int32 const Index, ECheckBoxState const InNewState)
 {
 	if (Items.IsValidIndex(Index))
 	{
-		Items[Index]->bIsChecked = InNewState == ECheckBoxState::Checked;
+		auto const Item = Items[Index];
+		bool const bNewIsChecked = InNewState == ECheckBoxState::Checked;
+		if (Item->bIsChecked == bNewIsChecked) return;
+		Item->bIsChecked = bNewIsChecked;
+		OnItemCheckBoxChanged(Item);
 		ListView->RebuildList();
 	}
 }
 
-void SUbCheckBoxList::OnItemCheckBox(TSharedRef<UbCheckBoxList::FItemPair> const& InItem)
+void SUbCheckBoxList::OnItemCheckBoxChanged(TSharedRef<UbCheckBoxList::FItemPair> const& InItem)
 {
 	UpdateAllChecked();
 	// ReSharper disable once CppExpressionWithoutSideEffects
@@ -234,8 +252,8 @@ TSharedRef<ITableRow> SUbCheckBoxList::HandleGenerateRow(TSharedRef<UbCheckBoxLi
 {
 	return SNew(UbCheckBoxList::SItemPair, OwnerTable, InItem)
 		.CheckBoxStyle(CheckBoxStyle)
-		.OnCheckUpdated(FSimpleDelegate::CreateLambda([this, InItem]() { OnItemCheckBox(InItem); }));
-	
+		.OnCheckUpdated(FSimpleDelegate::CreateLambda([this, InItem]() { OnItemCheckBoxChanged(InItem); }));
 }
 
 #undef LOCTEXT_NAMESPACE
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
