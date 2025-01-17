@@ -91,15 +91,19 @@ protected:
 	void MarkDirty();
 	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
-
+	void HandleZoomFont(float Offset);
+	void HandleZoomColumns(float Offset);
+	void HandleFontChanged();
+	
 	FSlateFontInfo GetFontInfo() const;
 
 	TSharedPtr<SExpandableArea> MakeBlockRangesSidebar();
 	TSharedPtr<SUbCheckBoxList> MakeBlockRangeSelector();
 
 	void PopulateSupportedCharacters();
-	void RebuildGrid(FUnicodeBlockRange Range, TSharedRef<SUniformGridPanel> const GridPanel) const;
+	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const;
 	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
 	void SelectAllRangesWithCharacters() const;
+	void RebuildGrid();
 };
 

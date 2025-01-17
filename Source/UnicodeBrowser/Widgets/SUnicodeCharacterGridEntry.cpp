@@ -23,7 +23,7 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 	}
 	
 	ChildSlot [
-		SNew(STextBlock)
+		SAssignNew(TextBlock, STextBlock)
 			.Font(InArgs._FontInfo)
 			.IsEnabled(true)
 			.Justification(ETextJustify::Center)
@@ -31,6 +31,11 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 			.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)))
 		];
 	
+}
+
+void SUnicodeCharacterGridEntry::SetFontInfo(FSlateFontInfo& FontInfoIn)
+{
+	TextBlock->SetFont(FontInfoIn);
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

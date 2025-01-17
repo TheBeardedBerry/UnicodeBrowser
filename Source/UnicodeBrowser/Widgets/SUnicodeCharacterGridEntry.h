@@ -26,6 +26,9 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 
+	void SetFontInfo(FSlateFontInfo &FontInfoIn);
+
 private:
 	TSharedPtr<FUnicodeBrowserRow> UnicodeCharacter;
+	TSharedPtr<STextBlock> TextBlock;
 };

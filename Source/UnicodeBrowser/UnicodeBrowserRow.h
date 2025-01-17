@@ -77,13 +77,13 @@ public:
 
 	// preload cached data
 	void Preload() const
-	{
+	{		
+		// ReSharper disable once CppExpressionWithoutSideEffects
+		GetFontData();
 		// ReSharper disable once CppExpressionWithoutSideEffects
 		GetMeasurements();
 		// ReSharper disable once CppExpressionWithoutSideEffects
 		CanLoadCodepoint();
-		// ReSharper disable once CppExpressionWithoutSideEffects
-		GetFontData();
 	}
 
 	friend bool operator==(FUnicodeBrowserRow const& Lhs, FUnicodeBrowserRow const& RHS)

@@ -27,7 +27,6 @@
 #include "Widgets/Text/STextBlock.h"
 
 
-
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeBlockRangeSelector()
@@ -103,17 +102,19 @@ FSlateFontInfo SUnicodeBrowserWidget::GetFontInfo() const
 	return Options->FontInfo;
 }
 
-void SUnicodeBrowserWidget::RebuildGrid(FUnicodeBlockRange const Range, TSharedRef<SUniformGridPanel> const GridPanel) const
+void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const
 {
+	TSharedRef<SUniformGridPanel> GridPanel = RangeWidget->GetGridPanel();
+	RangeWidget->Characters.Empty();
 	GridPanel->ClearChildren();
 
-	if (!Rows.Contains(Range.Index)) return;
+	if (!Rows.Contains(RangeWidget->GetRange().Index)) return;
 
 	auto const NumCols = Options->NumCols;
 	GridPanel->SetMinDesiredSlotHeight(Options->FontInfo.Size * 2);
 	GridPanel->SetMinDesiredSlotWidth(Options->FontInfo.Size * 2);
 
-	auto RowEntries = Rows.FindChecked(Range.Index);
+	auto RowEntries = Rows.FindChecked(RangeWidget->GetRange().Index);
 	// pad the grid with empty slots so that the grid is always filled with a uniform number of columns
 	auto const NumEntries = FMath::Max(RowEntries.Num(), NumCols);
 	for (int32 i = 0; i < NumEntries; ++i)
@@ -129,6 +130,8 @@ void SUnicodeBrowserWidget::RebuildGrid(FUnicodeBlockRange const Range, TSharedR
 				.OnMouseDoubleClick(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
 				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row);
 
+		RangeWidget->Characters.Add(GridCell);
+		
 		Slot
 		[
 			GridCell.ToSharedRef()
@@ -292,7 +295,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.VAlign(VAlign_Fill)
 				.HAlign(HAlign_Fill)
 				[
-				SAssignNew(RangeScrollbox, SScrollBox)
+					SAssignNew(RangeScrollbox, SScrollBox)
 				]
 			]
 			+ SSplitter::Slot()
@@ -315,7 +318,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 						SAssignNew(CurrentCharacterView, STextBlock)
 						.Visibility(EVisibility::Visible)
 						.OnDoubleClicked(this, &SUnicodeBrowserWidget::OnCurrentCharacterClicked)
-						.Font(this, &SUnicodeBrowserWidget::GetFontInfo)
+						.Font(GetFontInfo())
 						.Justification(ETextJustify::Center)
 						.IsEnabled(true)
 						.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), CurrentRow->Codepoint, *CurrentRow->Character)))
@@ -375,12 +378,47 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	];
 }
 
-void SUnicodeBrowserWidget::Update()
+
+void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
+{	
+	Options->FontInfo.Size += Offset;
+
+	// update each entry with the new fontsize
+	for(auto &[Range, RangeWidget] : RangeWidgets)
+	{
+		for(auto &CharacterGridEntry : RangeWidget->Characters)
+		{
+			CharacterGridEntry->SetFontInfo(Options->FontInfo);			
+		}
+	}
+}
+
+void SUnicodeBrowserWidget::HandleZoomColumns(float Offset)
 {
-	bool const bIsInitialized = !Rows.IsEmpty();
+	// we want inverted behavior for columns
+	Options->NumCols -= Offset;
+	
+	RebuildGrid();
+}
+
+void SUnicodeBrowserWidget::HandleFontChanged()
+{	
 	// rebuild the character list
 	PopulateSupportedCharacters();
 
+	// update the font for the character preview
+	CurrentCharacterView->SetFont(GetFontInfo());
+}
+
+
+void SUnicodeBrowserWidget::Update()
+{
+	bool const bIsInitialized = !Rows.IsEmpty();
+	// this is a hacky solution to only update the font if the object or typeface changed
+	if(!bIsInitialized || Options->FontInfo.FontObject != CurrentCharacterView->GetFont().FontObject || Options->FontInfo.TypefaceFontName != CurrentCharacterView->GetFont().TypefaceFontName){
+		HandleFontChanged();
+	}
+	
 	if (!bIsInitialized)
 	{
 		// create the range widgets for the first time
@@ -389,13 +427,16 @@ void SUnicodeBrowserWidget::Update()
 			RangeWidgets.Add(Range.Index,
 				SNew(SUnicodeRangeWidget)
 					.Range(Range)
-					.Visibility(RangeSelector->IsItemChecked(CheckboxIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed));
+					.Visibility(RangeSelector->IsItemChecked(CheckboxIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed)
+					.OnZoomFontSize(this, &SUnicodeBrowserWidget::HandleZoomFont)
+					.OnZoomColumnCount(this, &SUnicodeBrowserWidget::HandleZoomColumns)
+				);
 		}
-		for (auto const& RangeWidget : RangeWidgets)
+		for (auto const& [Range, RangeWidget] : RangeWidgets)
 		{
 			RangeScrollbox->AddSlot()
 			[
-				RangeWidget.Value.ToSharedRef()
+				RangeWidget.ToSharedRef()
 			];
 		}
 
@@ -403,31 +444,29 @@ void SUnicodeBrowserWidget::Update()
 		OnOnlySymbolsClicked();
 	}
 
-	// rebuild the grid
-	for (auto const& Range : Ranges)
-	{
-		if (const auto RangeWidget = RangeWidgets.Find(Range.Index))
-		{
-			RebuildGrid(Range, RangeWidget->Get()->GetGridPanel());
-		}
-	}
+	RebuildGrid();
 }
 
 void SUnicodeBrowserWidget::UpdateFromFont(struct FPropertyChangedEvent* PropertyChangedEvent)
 {
-	MarkDirty();
+	Update();
 }
 
 void SUnicodeBrowserWidget::SelectAllRangesWithCharacters() const
 {
-	RangeSelector.Get()->UncheckAll();
-	for (auto const& Range : Ranges)
+	for (auto const& [Range, CheckboxIndex] : CheckboxIndices)
 	{
-		if (CheckboxIndices.Contains(Range.Index))
-		{
-			bool const bRangeHasCharacters = Rows.Contains(Range.Index) ? !Rows.FindChecked(Range.Index).IsEmpty() : false;
-			RangeSelector.Get()->SetItemChecked(CheckboxIndices.FindChecked(Range.Index), bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
-		}
+		bool const bRangeHasCharacters = Rows.Contains(Range) && !Rows.FindChecked(Range).IsEmpty();
+		RangeSelector.Get()->SetItemChecked(CheckboxIndex, bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);		
+	}
+}
+
+void SUnicodeBrowserWidget::RebuildGrid()
+{
+	// rebuild the grid
+	for (auto & [Range, RangeWidget] : RangeWidgets)
+	{
+		RebuildGridRange(RangeWidget);
 	}
 }
 
