@@ -1,4 +1,6 @@
-#include "UnicodeBrowserWidget.h"
+#include "UnicodeBrowserStatic.h"
+
+#include "Fonts/UnicodeBlockRange.h"
 
 THIRD_PARTY_INCLUDES_START
 #include <unicode/uchar.h>
@@ -60,4 +62,3 @@ FString UnicodeBrowser::GetUnicodeCharacterName(int32 const CharCode)
 	delete[] name;
 	return Result;
 }
-

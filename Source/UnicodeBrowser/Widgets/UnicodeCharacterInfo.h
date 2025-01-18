@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "UnicodeBrowser/UnicodeBrowserWidget.h"
+#include "../UnicodeBrowserRow.h"
 
 #include "Widgets/SCompoundWidget.h"
 

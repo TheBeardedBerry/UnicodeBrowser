@@ -6,6 +6,8 @@
 
 #include "Modules/ModuleManager.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(UnicodeBrowserOptions)
+
 TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrowserOptions* Options)
 {
 	FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
@@ -39,6 +41,6 @@ void UUnicodeBrowserOptions::PostEditChangeProperty(FPropertyChangedEvent& Prope
 	{
 		FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 	}
-	
+
 	OnChanged.Broadcast(&PropertyChangedEvent);
 }

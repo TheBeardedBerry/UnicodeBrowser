@@ -4,6 +4,8 @@
 
 #include "UnicodeBrowser/UnicodeBrowserRow.h"
 
+#include "Widgets/Text/STextBlock.h"
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
@@ -63,6 +65,9 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
+			.Visibility_Lambda([this](){
+				return Row.Get()->GetFontData()->GetSubFaceIndex() != 0 ? EVisibility::Visible : EVisibility::Collapsed;
+			})
 			.Text_Lambda(
 				[this]()
 				{
@@ -80,6 +85,9 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 		+ SVerticalBox::Slot()
 		[
 			SNew(STextBlock)
+			.Visibility_Lambda([this](){
+				return Row.Get()->GetScaling() != 1.f ? EVisibility::Visible : EVisibility::Collapsed;
+			})
 			.Text_Lambda(
 				[this]()
 				{

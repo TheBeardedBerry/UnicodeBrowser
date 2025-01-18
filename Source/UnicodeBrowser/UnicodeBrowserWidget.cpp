@@ -2,6 +2,7 @@
 
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
+#include "IDetailsView.h"
 #include "SSimpleButton.h"
 #include "SlateOptMacros.h"
 
@@ -13,19 +14,21 @@
 
 #include "Modules/ModuleManager.h"
 
+#include "UnicodeBrowser/UnicodeBrowserOptions.h"
+#include "UnicodeBrowser/UnicodeBrowserStatic.h"
 #include "UnicodeBrowser/Widgets/SUbCheckBoxList.h"
+
 #include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/SUnicodeRangeWidget.h"
-
 #include "Widgets/UnicodeCharacterInfo.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Layout/SSplitter.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
 #include "Widgets/Text/STextBlock.h"
-
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -38,11 +41,13 @@ TSharedPtr<SUbCheckBoxList> SUnicodeBrowserWidget::MakeBlockRangeSelector()
 	for (auto const& Range : Ranges)
 	{
 		auto ItemWidget = SNew(SSimpleButton)
-			.Text_Lambda([this, Range]()
-			{
-				int32 const Num = Rows.Contains(Range.Index) ? Rows.FindChecked(Range.Index).Num() : 0;
-				return FText::FromString(FString::Printf(TEXT("%s (%d)"), *Range.DisplayName.ToString(), Num));
-			})
+			.Text_Lambda(
+				[this, Range]()
+				{
+					int32 const Num = Rows.Contains(Range.Index) ? Rows.FindChecked(Range.Index).Num() : 0;
+					return FText::FromString(FString::Printf(TEXT("%s (%d)"), *Range.DisplayName.ToString(), Num));
+				}
+			)
 			.ToolTipText(
 				FText::FromString(
 					FString::Printf(
@@ -104,7 +109,7 @@ FSlateFontInfo SUnicodeBrowserWidget::GetFontInfo() const
 
 void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const
 {
-	TSharedRef<SUniformGridPanel> GridPanel = RangeWidget->GetGridPanel();
+	TSharedRef<SUniformGridPanel> const GridPanel = RangeWidget->GetGridPanel();
 	RangeWidget->Characters.Empty();
 	GridPanel->ClearChildren();
 
@@ -125,13 +130,13 @@ void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> Ran
 
 		auto const Row = RowEntries[i];
 		TSharedPtr<SUnicodeCharacterGridEntry> GridCell = SNew(SUnicodeCharacterGridEntry)
-				.FontInfo(GetFontInfo())
-				.UnicodeCharacter(Row)
-				.OnMouseDoubleClick(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
-				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row);
+			.FontInfo(GetFontInfo())
+			.UnicodeCharacter(Row)
+			.OnMouseDoubleClick(this, &SUnicodeBrowserWidget::OnCharacterClicked, Row->Character)
+			.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row);
 
 		RangeWidget->Characters.Add(GridCell);
-		
+
 		Slot
 		[
 			GridCell.ToSharedRef()
@@ -378,31 +383,30 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	];
 }
 
-
-void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
-{	
+void SUnicodeBrowserWidget::HandleZoomFont(float const Offset)
+{
 	Options->FontInfo.Size = FMath::Max(1.0f, Options->FontInfo.Size + Offset);
 
 	// update each entry with the new fontsize
-	for(auto &[Range, RangeWidget] : RangeWidgets)
+	for (auto& [Range, RangeWidget] : RangeWidgets)
 	{
-		for(auto &CharacterGridEntry : RangeWidget->Characters)
+		for (auto const& CharacterGridEntry : RangeWidget->Characters)
 		{
-			CharacterGridEntry->SetFontInfo(Options->FontInfo);			
+			CharacterGridEntry->SetFontInfo(Options->FontInfo);
 		}
 	}
 }
 
-void SUnicodeBrowserWidget::HandleZoomColumns(float Offset)
+void SUnicodeBrowserWidget::HandleZoomColumns(float const Offset)
 {
 	// we want inverted behavior for columns
 	Options->NumCols = FMath::Max(1, FMath::RoundToInt(Options->NumCols - Offset));
-	
+
 	RebuildGrid();
 }
 
 void SUnicodeBrowserWidget::HandleFontChanged()
-{	
+{
 	// rebuild the character list
 	PopulateSupportedCharacters();
 
@@ -410,27 +414,28 @@ void SUnicodeBrowserWidget::HandleFontChanged()
 	CurrentCharacterView->SetFont(GetFontInfo());
 }
 
-
 void SUnicodeBrowserWidget::Update()
 {
 	bool const bIsInitialized = !Rows.IsEmpty();
 	// this is a hacky solution to only update the font if the object or typeface changed
-	if(!bIsInitialized || Options->FontInfo.FontObject != CurrentCharacterView->GetFont().FontObject || Options->FontInfo.TypefaceFontName != CurrentCharacterView->GetFont().TypefaceFontName){
+	if (!bIsInitialized || Options->FontInfo.FontObject != CurrentCharacterView->GetFont().FontObject || Options->FontInfo.TypefaceFontName != CurrentCharacterView->GetFont().TypefaceFontName)
+	{
 		HandleFontChanged();
 	}
-	
+
 	if (!bIsInitialized)
 	{
 		// create the range widgets for the first time
 		for (auto const& Range : Ranges)
 		{
-			RangeWidgets.Add(Range.Index,
+			RangeWidgets.Add(
+				Range.Index,
 				SNew(SUnicodeRangeWidget)
-					.Range(Range)
-					.Visibility(RangeSelector->IsItemChecked(CheckboxIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed)
-					.OnZoomFontSize(this, &SUnicodeBrowserWidget::HandleZoomFont)
-					.OnZoomColumnCount(this, &SUnicodeBrowserWidget::HandleZoomColumns)
-				);
+				.Range(Range)
+				.Visibility(RangeSelector->IsItemChecked(CheckboxIndices[Range.Index]) ? EVisibility::Visible : EVisibility::Collapsed)
+				.OnZoomFontSize(this, &SUnicodeBrowserWidget::HandleZoomFont)
+				.OnZoomColumnCount(this, &SUnicodeBrowserWidget::HandleZoomColumns)
+			);
 		}
 		for (auto const& [Range, RangeWidget] : RangeWidgets)
 		{
@@ -457,14 +462,14 @@ void SUnicodeBrowserWidget::SelectAllRangesWithCharacters() const
 	for (auto const& [Range, CheckboxIndex] : CheckboxIndices)
 	{
 		bool const bRangeHasCharacters = Rows.Contains(Range) && !Rows.FindChecked(Range).IsEmpty();
-		RangeSelector.Get()->SetItemChecked(CheckboxIndex, bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);		
+		RangeSelector.Get()->SetItemChecked(CheckboxIndex, bRangeHasCharacters ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 	}
 }
 
 void SUnicodeBrowserWidget::RebuildGrid()
 {
 	// rebuild the grid
-	for (auto & [Range, RangeWidget] : RangeWidgets)
+	for (auto& [Range, RangeWidget] : RangeWidgets)
 	{
 		RebuildGridRange(RangeWidget);
 	}

@@ -26,7 +26,7 @@ private:
 	mutable TOptional<FVector2D> Measurements;
 	mutable TOptional<bool> bCanLoadCodepoint;
 	mutable TOptional<float> ScalingFactor;
-	
+
 public:
 	FFontData const* GetFontData() const
 	{
@@ -77,7 +77,7 @@ public:
 
 	// preload cached data
 	void Preload() const
-	{		
+	{
 		// ReSharper disable once CppExpressionWithoutSideEffects
 		GetFontData();
 		// ReSharper disable once CppExpressionWithoutSideEffects

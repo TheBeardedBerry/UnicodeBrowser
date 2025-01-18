@@ -3,59 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UnicodeBrowserOptions.h"
-#include "UnicodeBrowserRow.h"
 
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
-#include "Widgets/SUnicodeCharacterGridEntry.h"
-#include "Widgets/SUnicodeRangeWidget.h"
-#include "Widgets/Views/SListView.h"
 
-class SExpandableArea;
-class UFont;
-class SScrollBox;
-class SUbCheckBoxList;
+class FUnicodeBrowserRow;
+class IDetailsView;
 class SCheckBoxList;
+class SExpandableArea;
+class SScrollBox;
+class STextBlock;
+class SUbCheckBoxList;
+class SUnicodeRangeWidget;
 class SUniformGridPanel;
-
-namespace UnicodeBrowser
-{
-	TCHAR constexpr InvalidSubChar = TEXT('\uFFFD');
-	TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
-	
-	static FString GetUnicodeCharacterName(int32 CharCode);
-
-	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
-
-	int32 GetRangeIndex(EUnicodeBlockRange BlockRange);
-
-	static TArray<EUnicodeBlockRange> SymbolRanges = {
-		EUnicodeBlockRange::Arrows,
-		EUnicodeBlockRange::BlockElements,
-		EUnicodeBlockRange::BoxDrawing,
-		EUnicodeBlockRange::CurrencySymbols,
-		EUnicodeBlockRange::Dingbats,
-		EUnicodeBlockRange::EmoticonsEmoji,
-		EUnicodeBlockRange::EnclosedAlphanumericSupplement,
-		EUnicodeBlockRange::EnclosedAlphanumerics,
-		EUnicodeBlockRange::GeneralPunctuation,
-		EUnicodeBlockRange::GeometricShapes,
-		EUnicodeBlockRange::Latin1Supplement,
-		EUnicodeBlockRange::LatinExtendedB,
-		EUnicodeBlockRange::MathematicalAlphanumericSymbols,
-		EUnicodeBlockRange::MathematicalOperators,
-		EUnicodeBlockRange::MiscellaneousMathematicalSymbolsB,
-		EUnicodeBlockRange::MiscellaneousSymbols,
-		EUnicodeBlockRange::MiscellaneousSymbolsAndArrows,
-		EUnicodeBlockRange::MiscellaneousSymbolsAndPictographs,
-		EUnicodeBlockRange::MiscellaneousTechnical,
-		EUnicodeBlockRange::NumberForms,
-		EUnicodeBlockRange::SupplementalSymbolsAndPictographs,
-		EUnicodeBlockRange::TransportAndMapSymbols
-	};
-}
+class UFont;
+class UUnicodeBrowserOptions;
+enum class EUnicodeBlockRange : uint16;
+struct FUnicodeBlockRange;
 
 class SUnicodeBrowserWidget : public SCompoundWidget
 {
@@ -75,35 +40,33 @@ protected:
 	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	TSharedPtr<IDetailsView> FontDetailsView;
+	TSharedPtr<SExpandableArea> BlockRangesSidebar;
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<STextBlock> CurrentCharacterView;
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
-	TSharedPtr<SExpandableArea> BlockRangesSidebar;
 	bool bDirty = true;
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
 
 protected:
-	FReply OnCurrentCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent) const;
 	FReply OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const;
-	FReply OnOnlySymbolsClicked();
-	FReply OnOnlyBlocksWithCharactersClicked() const;
-	void UpdateRangeVisibility(int32 Index);
-	void MarkDirty();
-	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
-	void HandleZoomFont(float Offset);
-	void HandleZoomColumns(float Offset);
+	FReply OnCurrentCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent) const;
+	FReply OnOnlyBlocksWithCharactersClicked() const;
+	FReply OnOnlySymbolsClicked();
+	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
 	void HandleFontChanged();
-	
+	void HandleZoomColumns(float Offset);
+	void HandleZoomFont(float Offset);
+	void MarkDirty();
+	void UpdateRangeVisibility(int32 Index);
 	FSlateFontInfo GetFontInfo() const;
 
 	TSharedPtr<SExpandableArea> MakeBlockRangesSidebar();
 	TSharedPtr<SUbCheckBoxList> MakeBlockRangeSelector();
 
 	void PopulateSupportedCharacters();
-	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const;
-	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
-	void SelectAllRangesWithCharacters() const;
 	void RebuildGrid();
+	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const;
+	void SelectAllRangesWithCharacters() const;
+	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
 };
-

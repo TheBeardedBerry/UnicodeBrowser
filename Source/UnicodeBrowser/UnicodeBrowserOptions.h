@@ -39,9 +39,9 @@ public:
 	UPROPERTY(EditAnywhere, AdvancedDisplay)
 	bool bCacheCharacterMetaOnLoad = false;
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, struct FPropertyChangedEvent*);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, FPropertyChangedEvent*);
 	FOnUbOptionsChangedDelegate OnChanged;
 
 	virtual void PostInitProperties() override;
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 };
