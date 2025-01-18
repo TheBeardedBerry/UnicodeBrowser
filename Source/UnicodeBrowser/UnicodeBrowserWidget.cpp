@@ -17,7 +17,7 @@
 #include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/SUnicodeRangeWidget.h"
 
-#include "Widgets/UnicodeCharacterInfo.h"
+#include "Widgets/SUnicodeCharacterInfo.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SGridPanel.h"
