@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DataAsset_FontTags.h"
 
 #include "Styling/CoreStyle.h"
 

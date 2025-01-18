@@ -13,9 +13,10 @@ void SUnicodeRangeWidget::Construct(const FArguments& InArgs)
 	Range = InArgs._Range.Get();
 	OnZoomFontSize = InArgs._OnZoomFontSize;
 	OnZoomColumnCount = InArgs._OnZoomColumnCount;
-	
-	SBorder::Construct(SBorder::FArguments());
 
+	SInvalidationPanel::Construct(SInvalidationPanel::FArguments());
+	SetCanCache(true);
+	
 	ChildSlot [
 		SNew(SExpandableArea)
 			.HeaderPadding(FMargin(2, 4))
@@ -34,7 +35,7 @@ void SUnicodeRangeWidget::Construct(const FArguments& InArgs)
 					SAssignNew(GridPanel, SUniformGridPanel)
 					.SlotPadding(FMargin(6.f, 4.f))
 				]
-			]	
+			]
 	];
 }
 

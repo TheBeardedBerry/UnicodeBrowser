@@ -9,7 +9,6 @@
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
-#include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/SUnicodeRangeWidget.h"
 #include "Widgets/Views/SListView.h"
 
@@ -24,10 +23,11 @@ namespace UnicodeBrowser
 {
 	TCHAR constexpr InvalidSubChar = TEXT('\uFFFD');
 	TOptional<EUnicodeBlockRange> GetUnicodeBlockRangeFromChar(int32 const CharCode);
+
+	static TArrayView<FUnicodeBlockRange const> Ranges; // all known Unicode ranges	
+	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 	
 	static FString GetUnicodeCharacterName(int32 CharCode);
-
-	TArrayView<FUnicodeBlockRange const> GetUnicodeBlockRanges();
 
 	int32 GetRangeIndex(EUnicodeBlockRange BlockRange);
 
@@ -59,51 +59,46 @@ namespace UnicodeBrowser
 
 class SUnicodeBrowserWidget : public SCompoundWidget
 {
+	friend class SUnicodeBrowserSidePanel;
+	
 public:
 	SLATE_BEGIN_ARGS(SUnicodeBrowserWidget) {}
 	SLATE_END_ARGS()
 
+	DECLARE_DELEGATE_OneParam(FHighlightCharacter, FUnicodeBrowserRow*)
+	FHighlightCharacter OnCharacterHighlight;
+	
+	DECLARE_DELEGATE_OneParam(FFontChanged, FSlateFontInfo*)
+	FFontChanged OnFontChanged;
+
+	FSlateFontInfo DefaultFont = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
+
+public:
 	void Construct(FArguments const& InArgs);
 	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
-	void Update();
-
-protected:
-	FDelegateHandle OnOptionsChangedHandle;
-	TArrayView<FUnicodeBlockRange const> Ranges; // all known Unicode ranges
-	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index 
-	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
-	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
-	TObjectPtr<UUnicodeBrowserOptions> Options;
-	TSharedPtr<IDetailsView> FontDetailsView;
-	TSharedPtr<SScrollBox> RangeScrollbox;
-	TSharedPtr<STextBlock> CurrentCharacterView;
-	TSharedPtr<SUbCheckBoxList> RangeSelector;
-	TSharedPtr<SExpandableArea> BlockRangesSidebar;
-	bool bDirty = true;
-	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
-
-protected:
-	FReply OnCurrentCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent) const;
-	FReply OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const;
-	FReply OnOnlySymbolsClicked();
-	FReply OnOnlyBlocksWithCharactersClicked() const;
-	void UpdateRangeVisibility(int32 Index);
 	void MarkDirty();
-	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
+	
+protected:
+	TObjectPtr<UUnicodeBrowserOptions> Options;
+	
+	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
+	TSharedPtr<SScrollBox> RangeScrollbox;
+	TSharedPtr<class SUnicodeBrowserSidePanel> SidePanel;
+	
+	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
+	FSlateFontInfo CurrentFont = DefaultFont;
+	
+	bool bDirty = true;
+	
+protected:
+	void Update();
+	void PopulateSupportedCharacters();
+	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget);	
+	void RebuildGrid();
+
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 	void HandleZoomFont(float Offset);
-	void HandleZoomColumns(float Offset);
-	void HandleFontChanged();
-	
-	FSlateFontInfo GetFontInfo() const;
-
-	TSharedPtr<SExpandableArea> MakeBlockRangesSidebar();
-	TSharedPtr<SUbCheckBoxList> MakeBlockRangeSelector();
-
-	void PopulateSupportedCharacters();
-	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const;
-	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
-	void SelectAllRangesWithCharacters() const;
-	void RebuildGrid();
+	void HandleZoomColumns(float Offset);	
 };
 

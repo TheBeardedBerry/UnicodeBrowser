@@ -16,19 +16,20 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 		.OnMouseMove(InArgs._OnMouseMove)
 		.OnMouseDoubleClick(InArgs._OnMouseDoubleClick));
 	
-	if(!UnicodeCharacter)
+	if(!UnicodeCharacter.IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("[SUnicodeCharacterGridEntry::Construct] Widget created without valid CharacterRow pointer"));
 		return;
 	}
+
+	SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)));
 	
 	ChildSlot [
 		SAssignNew(TextBlock, STextBlock)
 			.Font(InArgs._FontInfo)
 			.IsEnabled(true)
 			.Justification(ETextJustify::Center)
-			.Text(FText::FromString(FString::Printf(TEXT("%s"), *UnicodeCharacter->Character)))
-			.ToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)))
+			.Text(FText::FromString(FString::Printf(TEXT("%s"), *UnicodeCharacter->Character)))			
 		];
 	
 }
