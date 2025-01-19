@@ -8,6 +8,10 @@ public class UnicodeBrowser : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		// these should be disabled when debugging with debugger
+		OptimizeCode = CodeOptimization.Always;
+		OptimizationLevel = OptimizationMode.Speed;
+		
 		PublicIncludePaths.AddRange(
 			new string[]
 			{
