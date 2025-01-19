@@ -21,5 +21,12 @@ class SUbSearchBar : public SBox {
 	protected:
 		TSharedPtr<SEditableTextBox> TextBox;
 		TSharedPtr<SCheckBox> CheckBox_AutoSetRanges;
+		TSharedPtr<SCheckBox> CheckBox_CaseSensitive;
 
+
+		void TriggerUpdate()
+		{
+			// this pretty much triggers an update as it will reevaluate the search
+			OnTextChanged.ExecuteIfBound(TextBox->GetText().ToString());
+		}
 };

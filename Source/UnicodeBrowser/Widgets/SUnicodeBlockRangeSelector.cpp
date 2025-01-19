@@ -75,7 +75,7 @@ void SUnicodeBlockRangeSelector::Construct(const FArguments& InArgs)
 		.AutoHeight()
 		[
 			SNew(SSpacer)
-			.Size(FVector2D(1, 5))
+			.Size(FVector2D(1, 10))
 		]
 		+SVerticalBox::Slot()
 		[
@@ -117,8 +117,7 @@ void SUnicodeBlockRangeSelector::UpdateRowVisibility(FSlateFontInfo* FontInfo)
 	bool const bHideEmptyRanges = CheckBox_HideEmptyRanges->IsChecked();
 	for(auto &[Range, ItemIndex] : CheckboxIndices)
 	{
-		// we use the raw character count, otherwise the resulting changes may be too confusing for the user
-		int32 const CharacterCount = UnicodeBrowser.Pin().Get()->RowsRaw.Contains(Range) ? UnicodeBrowser.Pin().Get()->RowsRaw.FindChecked(Range).Num() : 0;
+		int32 const CharacterCount = UnicodeBrowser.Pin().Get()->Rows.Contains(Range) ? UnicodeBrowser.Pin().Get()->Rows.FindChecked(Range).Num() : 0;
 		CheckBoxList->Items[ItemIndex].Get().bIsVisible = !bHideEmptyRanges || CharacterCount > 0;
 	}
 

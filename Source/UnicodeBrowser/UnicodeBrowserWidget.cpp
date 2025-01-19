@@ -233,6 +233,9 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 {
 	bool const bFilterTags = Needle.Len() > 0 && Options->Preset && Options->Preset->SupportsFont(CurrentFont);
 	bool const bFilterByCharacter = Needle.Len() == 1;
+
+	bool const bCaseSensitive = SearchBar.Get()->CheckBox_CaseSensitive->IsChecked();
+	
 	bool bNeedUpdate = false;
 	
 	TArray<int32> Whitelist;
@@ -253,7 +256,7 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 
 			if(!bToggleRowState && bFilterByCharacter)
 			{
-				bToggleRowState |= !Needle.Equals(RowRaw->Character, ESearchCase::CaseSensitive) != RowRaw->bFilteredByTag;				
+				bToggleRowState |= !Needle.Equals(RowRaw->Character, bCaseSensitive ? ESearchCase::CaseSensitive : ESearchCase::IgnoreCase) != RowRaw->bFilteredByTag;				
 			}
 
 			if(bToggleRowState)

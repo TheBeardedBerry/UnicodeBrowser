@@ -43,14 +43,38 @@ public:
 
 	mutable TMap<int32, int32> CodepointLookup; // Codepoint <> Characters Index
 
-	TArray<int32> GetCharactersByNeedle(FString Needle) const
+	TArray<int32> GetCharactersByNeedle(FString NeedleIn) const
 	{
 		TArray<int32> Result;
+		TArray<FString> Needles;
+
+		// explode only if the length is >1 since "," is a valid character search term
+		if(NeedleIn.Len() > 1)
+		{
+			NeedleIn.ParseIntoArray(Needles, TEXT(","));
+		}
+		else
+		{
+			Needles = { NeedleIn };
+		}
+
+		// trim, as the user may type stuff like "Phone, Calculator"
+		for(FString &Needle : Needles)
+		{
+			 Needle.TrimStartAndEndInline();
+		}
+		
 		Result.Reserve(Characters.Num());
 		for(FUnicodeCharacterTags const &Entry : Characters)
 		{
-			if(Entry.ContainsNeedle(Needle))
-				Result.Add(Entry.Character);
+			for(FString const &Needle : Needles)
+			{
+				if(Entry.ContainsNeedle(Needle))
+				{
+					Result.Add(Entry.Character);
+					break;
+				}
+			}
 		}
 
 		return Result;
