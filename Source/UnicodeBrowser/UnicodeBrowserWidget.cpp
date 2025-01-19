@@ -232,7 +232,20 @@ void SUnicodeBrowserWidget::RebuildGrid()
 void SUnicodeBrowserWidget::FilterByString(FString Needle)
 {
 	bool const bFilterTags = Needle.Len() > 0 && Options->Preset && Options->Preset->SupportsFont(CurrentFont);
-	bool const bFilterByCharacter = Needle.Len() == 1;
+
+	// build an array which include all single character search terms
+	TArray<FString> CharacterNeedles;
+	Needle.ParseIntoArray(CharacterNeedles, TEXT(","));
+	for(int Idx=CharacterNeedles.Num() - 1; Idx >= 0; Idx--)
+	{
+		CharacterNeedles[Idx].TrimStartAndEndInline();
+		if(CharacterNeedles[Idx].Len() > 1)
+		{
+			CharacterNeedles.RemoveAtSwap(Idx);
+		}
+	}
+	
+	bool const bFilterByCharacter = CharacterNeedles.Num() > 0;
 
 	bool const bCaseSensitive = SearchBar.Get()->CheckBox_CaseSensitive->IsChecked();
 	
@@ -256,7 +269,12 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 
 			if(!bToggleRowState && bFilterByCharacter)
 			{
-				bToggleRowState |= !Needle.Equals(RowRaw->Character, bCaseSensitive ? ESearchCase::CaseSensitive : ESearchCase::IgnoreCase) != RowRaw->bFilteredByTag;				
+				bool const bMatchesCharacter = CharacterNeedles.ContainsByPredicate([bCaseSensitive, RowRaw](FString const &CharacterNeedle)
+				{
+					return CharacterNeedle.Equals(RowRaw->Character, bCaseSensitive ? ESearchCase::CaseSensitive : ESearchCase::IgnoreCase);
+				});
+				
+				bToggleRowState |= !bMatchesCharacter != RowRaw->bFilteredByTag;				
 			}
 
 			if(bToggleRowState)
@@ -337,14 +355,14 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 
 void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 {	
-	CurrentFont.Size = Options->FontInfo.Size = FMath::Max(1.0f, Options->FontInfo.Size + Offset);
+	Options->FontInfo.Size = CurrentFont.Size = FMath::Max(1.0f, Options->FontInfo.Size + Offset);
 
 	// update each entry with the new fontsize
 	for(auto &[Range, RangeWidget] : RangeWidgets)
 	{
 		for(auto &CharacterGridEntry : RangeWidget->Characters)
 		{
-			CharacterGridEntry->SetFontInfo(Options->FontInfo);			
+			CharacterGridEntry->SetFontInfo(CurrentFont);			
 		}
 	}
 }
