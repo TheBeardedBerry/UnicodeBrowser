@@ -25,6 +25,9 @@ public:
 	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient, DisplayName="Font")
 	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 
+	UPROPERTY(EditAnywhere, Transient, DisplayName="Preset")
+	TObjectPtr<UDataAsset_FontTags> Preset;
+
 	UPROPERTY(EditAnywhere)
 	int32 NumCols = 16;
 

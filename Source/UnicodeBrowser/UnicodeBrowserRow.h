@@ -20,8 +20,12 @@ public:
 	int32 Codepoint = 0;
 	TOptional<EUnicodeBlockRange> BlockRange;
 
-private:
+	bool bFilteredByTag = false;
+
+		
 	FSlateFontInfo const* FontInfo = nullptr;
+	
+private:	
 	mutable FFontData const* FontData = nullptr;
 	mutable TOptional<FVector2D> Measurements;
 	mutable TOptional<bool> bCanLoadCodepoint;

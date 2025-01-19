@@ -2,6 +2,7 @@
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "SlateOptMacros.h"
+#include "Engine/Font.h"
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Framework/Application/SlateApplication.h"
@@ -64,7 +65,21 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 			.SizeRule(SSplitter::FractionOfParent)
 			.Value(0.7)
 			[
-				SAssignNew(RangeScrollbox, SScrollBox)
+				SNew(SSplitter)
+					.Orientation(Orient_Vertical)
+					.ResizeMode(ESplitterResizeMode::Fill)
+					+ SSplitter::Slot()
+					.SizeRule(SSplitter::SizeToContent)
+					[
+						SAssignNew(SearchBar, SUbSearchBar)
+						.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString)						
+					]
+					+ SSplitter::Slot()
+					.SizeRule(SSplitter::FractionOfParent)
+					.Value(1.0)
+					[
+						SAssignNew(RangeScrollbox, SScrollBox)
+					]
 			]
 			+ SSplitter::Slot()
 			.SizeRule(SSplitter::FractionOfParent)
@@ -73,6 +88,8 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				SAssignNew(SidePanel, SUnicodeBrowserSidePanel).UnicodeBrowser(SharedThis(this))
 			]				
 	];
+
+	RangeScrollbox->SetScrollBarRightClickDragAllowed(true);
 
 	if(!bIsInitialized){		
 		MarkDirty();
@@ -113,7 +130,7 @@ void SUnicodeBrowserWidget::Update()
 		// rebuild the character list
 		PopulateSupportedCharacters();
 		
-		OnFontChanged.ExecuteIfBound(&CurrentFont);
+		OnFontChanged.Broadcast(&CurrentFont);
 
 		if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid() && RangeScrollbox.IsValid()){
 			RangeScrollbox->ClearChildren();
@@ -150,13 +167,13 @@ void SUnicodeBrowserWidget::Update()
 
 void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 {
-	Rows.Empty();
-	Rows.Reserve(UnicodeBrowser::GetUnicodeBlockRanges().Num());
+	RowsRaw.Empty();
+	RowsRaw.Reserve(UnicodeBrowser::GetUnicodeBlockRanges().Num());
 
 	for (auto const& Range : UnicodeBrowser::GetUnicodeBlockRanges())
 	{
-		Rows.Add(Range.Index);
-		TArray<TSharedPtr<FUnicodeBrowserRow>>& RangeArray = Rows.FindChecked(Range.Index);
+		RowsRaw.Add(Range.Index);
+		TArray<TSharedPtr<FUnicodeBrowserRow>>& RangeArray = RowsRaw.FindChecked(Range.Index);
 
 		for (int CharCode = Range.Range.GetLowerBound().GetValue(); CharCode <= Range.Range.GetUpperBound().GetValue(); ++CharCode)
 		{
@@ -167,12 +184,39 @@ void SUnicodeBrowserWidget::PopulateSupportedCharacters()
 				Row->Preload();
 			}
 
-			if (Options->bShowMissing || Row->CanLoadCodepoint())
-			{
-				RangeArray.Add(Row);
-			}
+			RangeArray.Add(Row);
 		}
 	}
+
+	UpdateCharacters();
+}
+
+void SUnicodeBrowserWidget::UpdateCharacters()
+{
+	Rows.Empty();
+	Rows.Reserve(RowsRaw.Num());
+	
+	for(const auto &[Range, RawRangeRows] : RowsRaw)
+	{
+		TArray<TSharedPtr<FUnicodeBrowserRow>> RowsFiltered = RawRangeRows.FilterByPredicate([Options = Options](TSharedPtr<FUnicodeBrowserRow> const &RawRow)
+		{
+			if(RawRow->bFilteredByTag)
+				return false;
+			
+			if (!Options->bShowMissing && !RawRow->CanLoadCodepoint())
+				return false;
+
+			if(!Options->bShowZeroSize && RawRow->GetMeasurements().IsZero())
+				return false;
+
+			return true;
+		});
+
+		if(!RowsFiltered.IsEmpty())
+		{
+			Rows.Add(Range, RowsFiltered);
+		}
+	}	
 }
 
 
@@ -182,6 +226,52 @@ void SUnicodeBrowserWidget::RebuildGrid()
 	for (auto & [Range, RangeWidget] : RangeWidgets)
 	{
 		RebuildGridRange(RangeWidget);
+	}
+}
+
+void SUnicodeBrowserWidget::FilterByString(FString Needle)
+{
+	bool const bFilterTags = Needle.Len() > 0 && Options->Preset && Options->Preset->SupportsFont(CurrentFont);
+	bool const bFilterByCharacter = Needle.Len() == 1;
+	bool bNeedUpdate = false;
+	
+	TArray<int32> Whitelist;
+	if(bFilterTags){
+		Whitelist = Options->Preset->GetCharactersByNeedle(Needle);
+	}
+	
+	for(auto &[Range, RawRangeRows] : RowsRaw)
+	{
+		for(TSharedPtr<FUnicodeBrowserRow> &RowRaw : RawRangeRows)
+		{
+			bool bToggleRowState = Needle.IsEmpty() && RowRaw->bFilteredByTag;
+			
+			if(!bToggleRowState && bFilterTags)
+			{
+				bToggleRowState |= !Whitelist.Contains(RowRaw->Codepoint) != RowRaw->bFilteredByTag;
+			}
+
+			if(!bToggleRowState && bFilterByCharacter)
+			{
+				bToggleRowState |= !Needle.Equals(RowRaw->Character, ESearchCase::CaseSensitive) != RowRaw->bFilteredByTag;				
+			}
+
+			if(bToggleRowState)
+			{
+				RowRaw->bFilteredByTag = !RowRaw->bFilteredByTag;
+				bNeedUpdate = true;
+			}
+		}
+	}
+
+	if(bNeedUpdate){
+		UpdateCharacters();
+		RebuildGrid();
+
+		if(SearchBar.Get()->CheckBox_AutoSetRanges->IsChecked())
+		{
+			SidePanel->SelectAllRangesWithCharacters();
+		}
 	}
 }
 
@@ -227,6 +317,8 @@ void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> Ran
 			GridCell.ToSharedRef()
 		];
 	}
+
+	RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
 }
 
 
@@ -242,7 +334,7 @@ FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FP
 
 void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 {	
-	Options->FontInfo.Size = FMath::Max(1.0f, Options->FontInfo.Size + Offset);
+	CurrentFont.Size = Options->FontInfo.Size = FMath::Max(1.0f, Options->FontInfo.Size + Offset);
 
 	// update each entry with the new fontsize
 	for(auto &[Range, RangeWidget] : RangeWidgets)

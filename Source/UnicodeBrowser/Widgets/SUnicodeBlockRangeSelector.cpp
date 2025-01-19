@@ -11,23 +11,24 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SUnicodeBlockRangeSelector::Construct(const FArguments& InArgs)
 {
-	SUbCheckBoxList::Construct(SUbCheckBoxList::FArguments()
-		.ItemHeaderLabel(INVTEXT("Unicode Block Ranges"))
-		.IncludeGlobalCheckBoxInHeaderRow(true)
-	);
-
 	if(!InArgs._UnicodeBrowser.IsValid())
-		return;		
+		return;
+
+	UnicodeBrowser = InArgs._UnicodeBrowser;
 	
 	CheckboxIndices.Reset();
 	CheckboxIndices.Reserve(UnicodeBrowser::GetUnicodeBlockRanges().Num());
 
-	OnItemCheckStateChanged.BindSP(this, &SUnicodeBlockRangeSelector::UpdateRangeVisibility);
+	CheckBoxList = SNew(SUbCheckBoxList)
+		.ItemHeaderLabel(FText::FromString(TEXT("Unicode Block Ranges")))
+		.IncludeGlobalCheckBoxInHeaderRow(true);
+	
+	CheckBoxList->OnItemCheckStateChanged.BindSP(this, &SUnicodeBlockRangeSelector::UpdateRangeVisibility);
 	
 	for (FUnicodeBlockRange const &Range : UnicodeBrowser::GetUnicodeBlockRanges())
 	{
 		auto ItemWidget = SNew(SSimpleButton)
-			.Text_Lambda([UnicodeBrowser = InArgs._UnicodeBrowser, Range = Range]()
+			.Text_Lambda([UnicodeBrowser = UnicodeBrowser, Range = Range]()
 			{
 				if(!UnicodeBrowser.IsValid())
 					return FText::GetEmpty();
@@ -48,9 +49,39 @@ void SUnicodeBlockRangeSelector::Construct(const FArguments& InArgs)
 			)
 			.OnClicked(this, &SUnicodeBlockRangeSelector::RangeClicked, Range.Index);
 
-		int32 Index = AddItem(ItemWidget, false);
+		int32 Index = CheckBoxList->AddItem(ItemWidget, false);		
 		CheckboxIndices.Add(Range.Index, Index);
 	}
+
+	UnicodeBrowser.Pin()->OnFontChanged.AddSP(this, &SUnicodeBlockRangeSelector::UpdateRowVisibility);
+
+	ChildSlot[
+		SNew(SVerticalBox)
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SAssignNew(CheckBox_HideEmptyRanges, SCheckBox)
+			.IsChecked(true)
+			.OnCheckStateChanged_Lambda([this](ECheckBoxState State)
+			{
+				UpdateRowVisibility(nullptr);
+			})
+			[
+				SNew(STextBlock)
+				.Text(INVTEXT("hide empty ranges"))
+			]
+		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SSpacer)
+			.Size(FVector2D(1, 5))
+		]
+		+SVerticalBox::Slot()
+		[
+			CheckBoxList.ToSharedRef()
+		]
+	];	
 }
 
 void SUnicodeBlockRangeSelector::SetRanges(TArray<EUnicodeBlockRange> RangesToSet)
@@ -64,7 +95,7 @@ void SUnicodeBlockRangeSelector::SetRanges(TArray<EUnicodeBlockRange> RangesToSe
 			continue;
 		}
 
-		SetItemChecked(CheckboxIndices[Range.Index], RangesToSet.Contains(Range.Index) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
+		CheckBoxList->SetItemChecked(CheckboxIndices[Range.Index], RangesToSet.Contains(Range.Index) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 	}
 }
 
@@ -74,7 +105,24 @@ void SUnicodeBlockRangeSelector::UpdateRangeVisibility(int32 const Index)
 	auto const RangeFound = CheckboxIndices.FindKey(Index);
 	if (!RangeFound) return;
 	auto const Range = *RangeFound;
-	OnRangeStateChanged.ExecuteIfBound(Range, IsItemChecked(Index));	
+	OnRangeStateChanged.ExecuteIfBound(Range, CheckBoxList->IsItemChecked(Index));	
+}
+
+
+void SUnicodeBlockRangeSelector::UpdateRowVisibility(FSlateFontInfo* FontInfo)
+{
+	if(!UnicodeBrowser.IsValid())
+		return;
+		
+	bool const bHideEmptyRanges = CheckBox_HideEmptyRanges->IsChecked();
+	for(auto &[Range, ItemIndex] : CheckboxIndices)
+	{
+		// we use the raw character count, otherwise the resulting changes may be too confusing for the user
+		int32 const CharacterCount = UnicodeBrowser.Pin().Get()->RowsRaw.Contains(Range) ? UnicodeBrowser.Pin().Get()->RowsRaw.FindChecked(Range).Num() : 0;
+		CheckBoxList->Items[ItemIndex].Get().bIsVisible = !bHideEmptyRanges || CharacterCount > 0;
+	}
+
+	CheckBoxList->UpdateItems();
 }
 
 FReply SUnicodeBlockRangeSelector::RangeClicked(EUnicodeBlockRange const BlockRange) const

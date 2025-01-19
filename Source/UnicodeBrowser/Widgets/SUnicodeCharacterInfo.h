@@ -20,5 +20,5 @@ public:
 
 	void Construct(FArguments const& InArgs);
 
-	void SetRow(TSharedPtr<FUnicodeBrowserRow> InRow);
+	void SetRow(TWeakPtr<SUnicodeBrowserWidget> UnicodeBrowser, TSharedPtr<FUnicodeBrowserRow> InRow);
 };

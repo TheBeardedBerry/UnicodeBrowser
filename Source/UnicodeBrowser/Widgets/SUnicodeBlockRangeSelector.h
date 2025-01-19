@@ -10,7 +10,7 @@
 /**
  * 
  */
-class UNICODEBROWSER_API SUnicodeBlockRangeSelector : public SUbCheckBoxList
+class UNICODEBROWSER_API SUnicodeBlockRangeSelector : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SUnicodeBlockRangeSelector) {}
@@ -30,12 +30,20 @@ public:
 	
 	bool IsRangeChecked(EUnicodeBlockRange Range) const
 	{
-		return CheckboxIndices.Contains(Range) ? IsItemChecked(CheckboxIndices.FindChecked(Range)) : false;
+		return CheckboxIndices.Contains(Range) ? CheckBoxList->IsItemChecked(CheckboxIndices.FindChecked(Range)) : false;
 	}
+
+	TSharedPtr<SCheckBox> CheckBox_HideEmptyRanges;
 	
 protected:	
 	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index
 
+	TWeakPtr<class SUnicodeBrowserWidget> UnicodeBrowser;
+	TSharedPtr<SUbCheckBoxList> CheckBoxList;
+	
 	void UpdateRangeVisibility(int32 const Index);
+
+	void UpdateRowVisibility(FSlateFontInfo* FontInfo);
+	
 	FReply RangeClicked(EUnicodeBlockRange const BlockRange) const;
 };

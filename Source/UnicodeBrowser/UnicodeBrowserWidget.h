@@ -9,6 +9,7 @@
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/SUbSearchBar.h"
 #include "Widgets/SUnicodeRangeWidget.h"
 #include "Widgets/Views/SListView.h"
 
@@ -68,10 +69,13 @@ public:
 	DECLARE_DELEGATE_OneParam(FHighlightCharacter, FUnicodeBrowserRow*)
 	FHighlightCharacter OnCharacterHighlight;
 	
-	DECLARE_DELEGATE_OneParam(FFontChanged, FSlateFontInfo*)
+	DECLARE_MULTICAST_DELEGATE_OneParam(FFontChanged, FSlateFontInfo*)
 	FFontChanged OnFontChanged;
 
 	FSlateFontInfo DefaultFont = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> RowsRaw;
+
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
 
 public:
@@ -79,11 +83,12 @@ public:
 	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
 	void MarkDirty();
 	
-protected:
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	
+protected:	
 	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
 	TSharedPtr<SScrollBox> RangeScrollbox;
+	TSharedPtr<SUbSearchBar> SearchBar;
 	TSharedPtr<class SUnicodeBrowserSidePanel> SidePanel;
 	
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
@@ -94,9 +99,12 @@ protected:
 protected:
 	void Update();
 	void PopulateSupportedCharacters();
+	void UpdateCharacters();
 	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget);	
 	void RebuildGrid();
 
+	void FilterByString(FString Needle);
+	
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 	void HandleZoomFont(float Offset);
 	void HandleZoomColumns(float Offset);	

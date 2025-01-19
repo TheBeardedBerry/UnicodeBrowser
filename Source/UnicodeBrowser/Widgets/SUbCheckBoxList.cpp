@@ -19,16 +19,6 @@ namespace UbCheckBoxList
 
 	constexpr float CheckBoxColumnWidth = 23.0f;
 
-	struct FItemPair
-	{
-		TSharedRef<SWidget> Widget;
-
-		bool bIsChecked;
-
-		FItemPair(TSharedRef<SWidget> const& InWidget, bool const bInChecked)
-			: Widget(InWidget), bIsChecked(bInChecked) {}
-	};
-
 	class SItemPair : public SMultiColumnTableRow<TSharedRef<FItemPair>>
 	{
 	public:
@@ -121,7 +111,8 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 			.Style(InArgs._CheckBoxStyle)
 			.IsChecked(this, &SUbCheckBoxList::GetAllCheckedState)
 			.OnCheckStateChanged(this, &SUbCheckBoxList::OnAllCheckedStateChanged)
-			.Visibility_Lambda([bShowHeaderCheckbox] { return bShowHeaderCheckbox ? EVisibility::Visible : EVisibility::Hidden; })
+			.Visibility(InArgs._IncludeGlobalCheckBoxInHeaderRow ? EVisibility::Visible : EVisibility::Hidden)
+			//.Visibility_Lambda([bShowHeaderCheckbox] { return bShowHeaderCheckbox ? EVisibility::Visible : EVisibility::Hidden; })
 		]
 		+ SHeaderRow::Column(UbCheckBoxList::ColumnID_Item)
 		.DefaultLabel(InArgs._ItemHeaderLabel)
@@ -130,7 +121,7 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 	ChildSlot
 	[
 		SAssignNew(ListView, SListView<TSharedRef<UbCheckBoxList::FItemPair>>)
-		.ListItemsSource(&Items)
+		.ListItemsSource(&ItemsFiltered)
 		.OnGenerateRow(this, &SUbCheckBoxList::HandleGenerateRow)
 		.HeaderRow(HeaderRowWidget)
 		.SelectionMode(ESelectionMode::None)
@@ -140,15 +131,18 @@ void SUbCheckBoxList::Construct(FArguments const& InArgs, TArray<TSharedRef<SWid
 
 int32 SUbCheckBoxList::AddItem(FText const& Text, bool bIsChecked)
 {
-	int32 const ReturnValue = Items.Add(MakeShared<UbCheckBoxList::FItemPair>(SNew(STextBlock).Text(Text), bIsChecked));
-	ListView->RebuildList();
-	return ReturnValue;
+	return AddItem(MakeShared<UbCheckBoxList::FItemPair>(SNew(STextBlock).Text(Text), bIsChecked));
 }
 
 int32 SUbCheckBoxList::AddItem(TSharedRef<SWidget> Widget, bool bIsChecked)
 {
-	int32 const ReturnValue = Items.Add(MakeShared<UbCheckBoxList::FItemPair>(Widget, bIsChecked));
-	ListView->RebuildList();
+	return AddItem(MakeShared<UbCheckBoxList::FItemPair>(Widget, bIsChecked));
+}
+
+int32 SUbCheckBoxList::AddItem(TSharedRef<UbCheckBoxList::FItemPair> Item)
+{
+	int32 const ReturnValue = Items.Add(Item);
+	UpdateItems();
 	return ReturnValue;
 }
 
@@ -163,7 +157,7 @@ void SUbCheckBoxList::UncheckAll()
 void SUbCheckBoxList::RemoveAll()
 {
 	Items.Reset();
-	ListView->RebuildList();
+	UpdateItems();
 }
 
 void SUbCheckBoxList::RemoveItem(int32 const Index)
@@ -171,7 +165,7 @@ void SUbCheckBoxList::RemoveItem(int32 const Index)
 	if (Items.IsValidIndex(Index))
 	{
 		Items.RemoveAt(Index);
-		ListView->RebuildList();
+		UpdateItems();
 	}
 }
 
@@ -202,6 +196,12 @@ void SUbCheckBoxList::UpdateAllChecked()
 	bAllCheckedState = bContainsTrue && bContainsFalse ? ECheckBoxState::Undetermined : (bContainsTrue ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
 }
 
+void SUbCheckBoxList::UpdateItems()
+{
+	ItemsFiltered = Items.FilterByPredicate([](TSharedRef<UbCheckBoxList::FItemPair> const &Item){ return Item->bIsVisible; });
+	ListView->RebuildList();
+}
+
 ECheckBoxState SUbCheckBoxList::GetAllCheckedState() const
 {
 	return bAllCheckedState;
@@ -215,7 +215,7 @@ void SUbCheckBoxList::OnAllCheckedStateChanged(ECheckBoxState const InNewState)
 		SetItemChecked(Index, InNewState);
 	}
 	bAllCheckedState = bNewValue ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-	ListView->RebuildList();
+	UpdateItems();
 
 	// ReSharper disable once CppExpressionWithoutSideEffects
 	OnItemCheckStateChanged.ExecuteIfBound(-1);
@@ -235,7 +235,18 @@ void SUbCheckBoxList::SetItemChecked(int32 const Index, ECheckBoxState const InN
 		if (Item->bIsChecked == bNewIsChecked) return;
 		Item->bIsChecked = bNewIsChecked;
 		OnItemCheckBoxChanged(Item);
-		ListView->RebuildList();
+		UpdateItems();
+	}
+}
+
+void SUbCheckBoxList::SetItemVisibility(int32 Index, bool bVisible)
+{
+	if (Items.IsValidIndex(Index))
+	{
+		auto const Item = Items[Index];
+		if (Item->bIsVisible == bVisible) return;
+		Item->bIsVisible = bVisible;
+		UpdateItems();
 	}
 }
 
