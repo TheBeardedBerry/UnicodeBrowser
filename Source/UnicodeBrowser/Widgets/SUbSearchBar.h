@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Widgets/Input/SSearchBox.h"
 #include "Framework/Application/SlateApplication.h"
 
 
@@ -19,7 +20,7 @@ class SUbSearchBar : public SBox {
 		FOnTextChanged OnTextChanged;
 	
 	protected:
-		TSharedPtr<SEditableTextBox> TextBox;
+		TSharedPtr<SSearchBox> SearchBox;
 		TSharedPtr<SCheckBox> CheckBox_AutoSetRanges;
 		TSharedPtr<SCheckBox> CheckBox_CaseSensitive;
 
@@ -27,6 +28,6 @@ class SUbSearchBar : public SBox {
 		void TriggerUpdate()
 		{
 			// this pretty much triggers an update as it will reevaluate the search
-			OnTextChanged.ExecuteIfBound(TextBox->GetText().ToString());
+			OnTextChanged.ExecuteIfBound(SearchBox->GetText().ToString());
 		}
 };
