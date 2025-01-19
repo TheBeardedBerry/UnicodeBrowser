@@ -46,7 +46,7 @@ void SUnicodeCharacterInfo::SetRow(TWeakPtr<SUnicodeBrowserWidget> UnicodeBrowse
 			+SVerticalBox::Slot()
 			[
 				SNew(STextBlock)
-				.Text(FText::FromString(FString::Printf(TEXT("Size: %s"), *InRow->GetMeasurements().ToString())))
+				.Text(FText::FromString(FString::Printf(TEXT("Size: %dx%d"), FMath::FloorToInt(InRow->GetMeasurements().X), FMath::FloorToInt(InRow->GetMeasurements().Y) )))
 			]
 			// font object
 			+SVerticalBox::Slot()

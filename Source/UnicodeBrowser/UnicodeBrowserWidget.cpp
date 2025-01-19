@@ -2,7 +2,6 @@
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "SlateOptMacros.h"
-#include "Engine/Font.h"
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Framework/Application/SlateApplication.h"

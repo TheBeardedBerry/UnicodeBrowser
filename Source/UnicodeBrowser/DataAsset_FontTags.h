@@ -34,6 +34,10 @@ class UNICODEBROWSER_API UDataAsset_FontTags : public UDataAsset
 	GENERATED_BODY()
 
 public:
+	// a parent asset, tags will be merged into this preset
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UDataAsset_FontTags> Parent;
+	
 	// the fonts which should be associated with the Tags
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<TObjectPtr<UFont>> Fonts;
@@ -41,8 +45,46 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FUnicodeCharacterTags> Characters;
 
+	// this data is generated at runtime
 	mutable TMap<int32, int32> CodepointLookup; // Codepoint <> Characters Index
+	mutable TArray<FUnicodeCharacterTags> CharactersMerged;
+	
+	TArray<FUnicodeCharacterTags>& GetCharactersMerged() const
+	{
+		if(CharactersMerged.IsEmpty())
+		{
+			CharactersMerged = Characters;
+			// create the codepoint cache for quicker lookup of existing entries
+			CacheCodepoints();
+			
+			if(Parent && Parent != this) // there's a chance of infinite recursion here, this still doesn't catch recursion traps like A => B => A
+			{			
+				for(FUnicodeCharacterTags &ParentCharacter : Parent->GetCharactersMerged())
+				{
+					// character exists, append tags
+					if(int32 *CharacterIndex = CodepointLookup.Find(ParentCharacter.Character))
+					{
+						for(FString &ParentCharacterTag : ParentCharacter.Tags)
+						{
+							CharactersMerged[*CharacterIndex].Tags.AddUnique(ParentCharacterTag);
+						}
+					}
+					// character doesn't exist, add it
+					else
+					{
+						CharactersMerged.Add(ParentCharacter);
+					}
+				}
 
+				// recreate the codepoint cache if the parent has any characters
+				if(Parent->GetCharactersMerged().Num() > 0){
+					CacheCodepoints();
+				}
+			}
+		}
+		return CharactersMerged;
+	}
+	
 	TArray<int32> GetCharactersByNeedle(FString NeedleIn) const
 	{
 		TArray<int32> Result;
@@ -64,8 +106,8 @@ public:
 			 Needle.TrimStartAndEndInline();
 		}
 		
-		Result.Reserve(Characters.Num());
-		for(FUnicodeCharacterTags const &Entry : Characters)
+		Result.Reserve(GetCharactersMerged().Num());
+		for(FUnicodeCharacterTags const &Entry : GetCharactersMerged())
 		{
 			for(FString const &Needle : Needles)
 			{
@@ -82,30 +124,32 @@ public:
 
 	bool SupportsFont(FSlateFontInfo const &FontInfo) const
 	{
-		return Fonts.Contains(Cast<UFont>(FontInfo.FontObject));
+		// allow presets to apply to all fonts if they don't contain any specific fonts
+		return Fonts.IsEmpty() || Fonts.Contains(Cast<UFont>(FontInfo.FontObject));
 	}
 
 	void CacheCodepoints() const
 	{
 		CodepointLookup.Reset();
-		CodepointLookup.Reserve(Characters.Num());
+		CodepointLookup.Reserve(CharactersMerged.Num());
 
-		for(int Idx=0; Idx < Characters.Num(); Idx++)
+		for(int Idx=0; Idx < CharactersMerged.Num(); Idx++)
 		{
-			CodepointLookup.Add(Characters[Idx].Character, Idx);
+			CodepointLookup.Add(CharactersMerged[Idx].Character, Idx);
 		}
 	}
 
 	TArray<FString> GetCodepointTags(int32 Codepoint) const
 	{
-		if(CodepointLookup.IsEmpty() && Characters.Num() > 0)
+		if(CodepointLookup.IsEmpty())
 		{
-			CacheCodepoints();
+			// this creates the cache
+			GetCharactersMerged();
 		}
 
 		if(int32 *Index = CodepointLookup.Find(Codepoint))
 		{
-			return Characters[*Index].Tags; 			
+			return GetCharactersMerged()[*Index].Tags; 			
 		}
 
 		return {};
