@@ -246,7 +246,7 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 	
 	bool const bFilterByCharacter = CharacterNeedles.Num() > 0;
 
-	bool const bCaseSensitive = SearchBar.Get()->CheckBox_CaseSensitive->IsChecked();
+	bool const bCaseSensitive = SearchBar.Get()->bCaseSensitive;
 	
 	bool bNeedUpdate = false;
 	
@@ -288,7 +288,7 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 		UpdateCharacters();
 		RebuildGrid();
 
-		if(SearchBar.Get()->CheckBox_AutoSetRanges->IsChecked())
+		if(SearchBar.Get()->bAutoSetRange)
 		{
 			SidePanel->SelectAllRangesWithCharacters();
 		}

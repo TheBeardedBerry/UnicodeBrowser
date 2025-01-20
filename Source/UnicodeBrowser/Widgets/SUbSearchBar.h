@@ -18,11 +18,12 @@ class SUbSearchBar : public SBox {
 		void Construct(const FArguments& InArgs);
 	
 		FOnTextChanged OnTextChanged;
+
+		bool bAutoSetRange = true;
+		bool bCaseSensitive = false;
 	
 	protected:
 		TSharedPtr<SSearchBox> SearchBox;
-		TSharedPtr<SCheckBox> CheckBox_AutoSetRanges;
-		TSharedPtr<SCheckBox> CheckBox_CaseSensitive;
 
 
 		void TriggerUpdate()
