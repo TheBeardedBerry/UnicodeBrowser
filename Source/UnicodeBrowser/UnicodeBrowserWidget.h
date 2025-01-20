@@ -85,8 +85,7 @@ public:
 	
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	
-protected:
-	UToolMenu *Menu;
+protected:	
 	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<SUbSearchBar> SearchBar;

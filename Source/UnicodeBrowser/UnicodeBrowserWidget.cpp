@@ -63,12 +63,11 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString);
 	}
 	
-	{
-		// generate the settings context menu
-		Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.SettingsMenu");		
-		this->CreateMenuSection_Settings(Menu);
-		SearchBar->CreateMenuSection_Settings(Menu);		
-	}
+	// generate the settings context menu
+	UToolMenu* Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.SettingsMenu");		
+	this->CreateMenuSection_Settings(Menu);
+	SearchBar->CreateMenuSection_Settings(Menu);		
+	
 
 	TSharedPtr<SLayeredImage> FilterImage = SNew(SLayeredImage)
 			.Image(FAppStyle::Get().GetBrush("DetailsView.ViewOptions"))
