@@ -13,8 +13,10 @@
 #include "Widgets/SUnicodeBrowserSidePanel.h"
 #include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/SUnicodeRangeWidget.h"
+#include "Widgets/Images/SLayeredImage.h"
 
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SSpinBox.h"
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -54,38 +56,90 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	if(!CurrentRow.IsValid()){
 		CurrentRow = MakeShared<FUnicodeBrowserRow>(UnicodeBrowser::InvalidSubChar, EUnicodeBlockRange::Specials, &CurrentFont);
 	}
+
+	SearchBar = SNew(SUbSearchBar)
+		.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString);
+
+	if(!Menu)
+	{
+		// generate the settings context menu
+		Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.SettingsMenu");		
+		this->CreateMenuSection_Settings(Menu);
+		SearchBar->CreateMenuSection_Settings(Menu);		
+	}
+
+
+	
+	TSharedPtr<SLayeredImage> FilterImage = SNew(SLayeredImage)
+			.Image(FAppStyle::Get().GetBrush("DetailsView.ViewOptions"))
+			.ColorAndOpacity(FSlateColor::UseForeground());
+
+	TSharedPtr<SComboButton> SettingsButton = SNew( SComboButton )
+		.HasDownArrow(false)
+		.ContentPadding(0.0f)
+		.ForegroundColor( FSlateColor::UseForeground() )
+		.ButtonStyle( FAppStyle::Get(), "SimpleButton" )
+		.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("ViewOptions")))
+		.MenuContent()
+		[			
+			UToolMenus::Get()->GenerateWidget(Menu->GetMenuName(), Menu)			
+		]
+		.ButtonContent()
+		[
+			FilterImage.ToSharedRef()
+		];
+	
 	
 	ChildSlot
 	[
 		SNew(SSplitter)
-			.Orientation(Orient_Horizontal)
-			.ResizeMode(ESplitterResizeMode::Fill)
-			+ SSplitter::Slot()
-			.SizeRule(SSplitter::FractionOfParent)
-			.Value(0.7)
+		.Orientation(Orient_Vertical)
+		.ResizeMode(ESplitterResizeMode::Fill)
+		+ SSplitter::Slot()
+			.SizeRule(SSplitter::SizeToContent)
 			[
-				SNew(SSplitter)
-					.Orientation(Orient_Vertical)
-					.ResizeMode(ESplitterResizeMode::Fill)
-					+ SSplitter::Slot()
-					.SizeRule(SSplitter::SizeToContent)
+				SNew(SBox)
+				.Padding(10)
+				[
+					SNew(SHorizontalBox)
+					+SHorizontalBox::Slot()
 					[
 						SAssignNew(SearchBar, SUbSearchBar)
-						.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString)						
+						.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString)
 					]
-					+ SSplitter::Slot()
-					.SizeRule(SSplitter::FractionOfParent)
-					.Value(1.0)
+					+SHorizontalBox::Slot()
+					.AutoWidth()			
 					[
-						SAssignNew(RangeScrollbox, SScrollBox)
+						SNew(SSpacer)
+						.Size(FVector2D(10, 1))
 					]
+					+SHorizontalBox::Slot()
+					.AutoWidth()			
+					[
+						SettingsButton.ToSharedRef()
+					]
+				]
 			]
 			+ SSplitter::Slot()
 			.SizeRule(SSplitter::FractionOfParent)
-			.Value(0.3)
+			.Value(1.0)
 			[
-				SAssignNew(SidePanel, SUnicodeBrowserSidePanel).UnicodeBrowser(SharedThis(this))
-			]				
+			SNew(SSplitter)
+				.Orientation(Orient_Horizontal)
+				.ResizeMode(ESplitterResizeMode::Fill)
+				+ SSplitter::Slot()
+				.SizeRule(SSplitter::FractionOfParent)
+				.Value(0.7)
+				[
+					SAssignNew(RangeScrollbox, SScrollBox)					
+				]
+				+ SSplitter::Slot()
+				.SizeRule(SSplitter::FractionOfParent)
+				.Value(0.3)
+				[
+					SAssignNew(SidePanel, SUnicodeBrowserSidePanel).UnicodeBrowser(SharedThis(this))
+				]				
+			]
 	];
 
 	RangeScrollbox->SetScrollBarRightClickDragAllowed(true);
@@ -94,6 +148,115 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		MarkDirty();
 	}
 }
+
+void SUnicodeBrowserWidget::CreateMenuSection_Settings(UToolMenu *Menu)
+{
+	FToolMenuSection &GeneralSettingsSection = Menu->AddSection(TEXT("GeneralSettings"), INVTEXT("general settings"));
+	{
+		{
+			FUIAction Action = FUIAction(
+				FExecuteAction::CreateLambda([this]()
+				{
+					Options->bShowMissing = !Options->bShowMissing;
+					UpdateCharacters();
+					RebuildGrid();
+				}),
+				FCanExecuteAction(),
+				FIsActionChecked::CreateLambda([this]() { return Options->bShowMissing; })
+			);
+			
+			GeneralSettingsSection.AddMenuEntry("ShowMissingCharacters", INVTEXT("show missing characters"), INVTEXT("should characters which are missing in the font be shown?"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+		}
+
+		{
+			FUIAction Action = FUIAction(
+				FExecuteAction::CreateLambda([this]()
+				{
+					Options->bShowZeroSize = !Options->bShowZeroSize;			
+					UpdateCharacters();
+					RebuildGrid();
+				}),
+				FCanExecuteAction(),
+				FIsActionChecked::CreateLambda([this]()	{ return Options->bShowZeroSize; })
+			);
+			
+			GeneralSettingsSection.AddMenuEntry("ShowZeroSizeCharacters", INVTEXT("show zero size"), INVTEXT("show Characters which have a measurement of 0x0 (primary for debug purposes)"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+		}
+
+		{
+			FUIAction Action = FUIAction(
+				FExecuteAction::CreateLambda([this]()
+				{
+					Options->bCacheCharacterMetaOnLoad = !Options->bCacheCharacterMetaOnLoad;
+				}),
+				FCanExecuteAction(),
+				FIsActionChecked::CreateLambda([this]()	{ return Options->bCacheCharacterMetaOnLoad; })
+			);
+			
+			GeneralSettingsSection.AddMenuEntry("CacheCharacterMeta", INVTEXT("cache character meta data"), INVTEXT("Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+		}
+	}
+
+	FToolMenuSection &DisplaySettingsSection = Menu->AddSection(TEXT("DisplaySettings"), INVTEXT("display settings"));
+	{
+		{
+			TSharedRef<SWidget> Widget = SNew(SBox)
+			.Padding(15, 0, 0, 0)
+			[
+				SNew(SHorizontalBox)
+				+SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Text(INVTEXT("columns"))
+				]
+				+SHorizontalBox::Slot()
+				.Padding(10, 0, 0, 0)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SSpinBox<int32>)
+					.Delta(1)
+					.MinValue(1)
+					.MaxValue(32)
+					.Value_Lambda([this]()  { return Options->NumCols; })
+					.OnValueChanged_Lambda([this](int32 CurrentValue){ Options->NumCols = CurrentValue; RebuildGrid(); })
+				]
+			];
+			
+			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserNumColumns",  Widget, FText::GetEmpty()));
+		}
+		
+		{
+			TSharedRef<SWidget> Widget = SNew(SBox)
+			.Padding(15, 0, 0, 0)
+			[
+				SNew(SHorizontalBox)
+				+SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Text(INVTEXT("font size"))
+				]
+				+SHorizontalBox::Slot()
+				.Padding(10, 0, 0, 0)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SSpinBox<float>)
+					.Delta(1)
+					.MinValue(6)
+					.MaxValue(200)
+					.Value_Lambda([this](){ return CurrentFont.Size; })
+					.OnValueChanged_Lambda([this](float CurrentValue){ Options->FontInfo.Size = CurrentFont.Size = CurrentValue; RebuildGrid(); })
+				]
+			];
+			
+			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserFontSize",  Widget, FText::GetEmpty()));
+		}
+	}
+}
+
 
 
 void SUnicodeBrowserWidget::MarkDirty()
@@ -119,11 +282,11 @@ void SUnicodeBrowserWidget::Tick(FGeometry const& AllottedGeometry, double const
 }
 
 
-void SUnicodeBrowserWidget::Update()
+void SUnicodeBrowserWidget::Update(bool bForceRepopulateCharacters)
 {
 	bool const bIsInitialized = !Rows.IsEmpty();
 
-	if(!bIsInitialized || Options->FontInfo.FontObject != CurrentFont.FontObject || Options->FontInfo.TypefaceFontName != CurrentFont.TypefaceFontName){
+	if(!bIsInitialized || bForceRepopulateCharacters || Options->FontInfo.FontObject != CurrentFont.FontObject || Options->FontInfo.TypefaceFontName != CurrentFont.TypefaceFontName){
 		CurrentFont = Options->FontInfo;
 		
 		// rebuild the character list

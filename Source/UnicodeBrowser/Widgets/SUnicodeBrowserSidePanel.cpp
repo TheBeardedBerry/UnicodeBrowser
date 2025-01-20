@@ -74,7 +74,6 @@ void SUnicodeBrowserSidePanel::Construct(const FArguments& InArgs)
 						[
 							SAssignNew(CurrentCharacterDetails, SUnicodeCharacterInfo).Row(UnicodeBrowser.Pin().Get()->CurrentRow)
 						]
-
 					]
 					+ SVerticalBox::Slot()
 					.AutoHeight()

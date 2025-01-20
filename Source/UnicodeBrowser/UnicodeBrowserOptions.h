@@ -28,19 +28,19 @@ public:
 	UPROPERTY(EditAnywhere, Transient, DisplayName="Preset")
 	TObjectPtr<UDataAsset_FontTags> Preset;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	int32 NumCols = 16;
 
 	// Show Characters which can't be displayed by the font
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	bool bShowMissing = false;
 
 	// Show Characters which have a measurement of 0x0 (primary for debug purposes)
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	bool bShowZeroSize = false;
 
 	// Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews
-	UPROPERTY(EditAnywhere, AdvancedDisplay)
+	UPROPERTY()
 	bool bCacheCharacterMetaOnLoad = false;
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, struct FPropertyChangedEvent*);

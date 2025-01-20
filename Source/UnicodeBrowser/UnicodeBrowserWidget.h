@@ -85,7 +85,8 @@ public:
 	
 	TObjectPtr<UUnicodeBrowserOptions> Options;
 	
-protected:	
+protected:
+	UToolMenu *Menu;
 	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<SUbSearchBar> SearchBar;
@@ -97,7 +98,7 @@ protected:
 	bool bDirty = true;
 	
 protected:
-	void Update();
+	void Update(bool bForceRepopulateCharacters = false);
 	void PopulateSupportedCharacters();
 	void UpdateCharacters();
 	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget);	
@@ -107,6 +108,9 @@ protected:
 	
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 	void HandleZoomFont(float Offset);
-	void HandleZoomColumns(float Offset);	
+	void HandleZoomColumns(float Offset);
+
+private:
+	void CreateMenuSection_Settings(UToolMenu *Menu);
 };
 

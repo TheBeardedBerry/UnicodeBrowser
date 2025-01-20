@@ -4,7 +4,7 @@
 #include "Framework/Application/SlateApplication.h"
 
 
-class SUbSearchBar : public SBox {
+class SUbSearchBar : public SSearchBox {
 	friend class SUnicodeBrowserWidget;
 	
 	public:
@@ -23,12 +23,12 @@ class SUbSearchBar : public SBox {
 		bool bCaseSensitive = false;
 	
 	protected:
-		TSharedPtr<SSearchBox> SearchBox;
-
 
 		void TriggerUpdate()
 		{
 			// this pretty much triggers an update as it will reevaluate the search
-			OnTextChanged.ExecuteIfBound(SearchBox->GetText().ToString());
+			OnTextChanged.ExecuteIfBound(GetText().ToString());
 		}
+
+		void CreateMenuSection_Settings(UToolMenu *Menu);
 };
