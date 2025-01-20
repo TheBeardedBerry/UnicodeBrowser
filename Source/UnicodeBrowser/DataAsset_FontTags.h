@@ -48,6 +48,10 @@ public:
 	// this data is generated at runtime
 	mutable TMap<int32, int32> CodepointLookup; // Codepoint <> Characters Index
 	mutable TArray<FUnicodeCharacterTags> CharactersMerged;
+
+	// the json file which was used to import the asset
+	UPROPERTY(VisibleAnywhere)
+	FString SourceFile;
 	
 	TArray<FUnicodeCharacterTags>& GetCharactersMerged() const
 	{
@@ -153,6 +157,89 @@ public:
 		}
 
 		return {};
+	}
+	
+	bool ImportFromJson(FString Filename)
+	{
+		FString JsonString;
+		if (!FFileHelper::LoadFileToString(JsonString, *Filename))
+			return false;
+
+		SourceFile = Filename;
+		
+		FString CodePointFieldDecimal = "";
+		FString CodePointFieldHexadecimal = "";
+		TArray<FString> TagFields;
+				
+		TSharedPtr<FJsonObject> JsonObject = MakeShared<FJsonObject>();
+		const auto Reader = TJsonReaderFactory<>::Create(JsonString);
+		FJsonSerializer::Deserialize(Reader, JsonObject);
+
+		if(!JsonObject->HasTypedField<EJson::Array>(TEXT("tagFields")))
+		{
+			return false;
+		}
+
+		JsonObject->TryGetStringField(TEXT("codepointFieldDecimal"), CodePointFieldDecimal);
+		JsonObject->TryGetStringField(TEXT("codepointFieldHexadecimal"), CodePointFieldHexadecimal);
+
+		if(CodePointFieldDecimal.IsEmpty() && CodePointFieldHexadecimal.IsEmpty())
+			return false;
+
+		JsonObject->TryGetStringArrayField(TEXT("tagFields"), TagFields);
+		if(TagFields.IsEmpty())
+			return false;
+
+		if(!JsonObject->HasTypedField<EJson::Array>(TEXT("glyphs")))
+			return false;
+
+		TArray<TSharedPtr<FJsonValue>> Glyphs = JsonObject->GetArrayField(TEXT("glyphs"));
+		if(Glyphs.IsEmpty())
+			return false;
+
+		for(TSharedPtr<FJsonValue> &GlyphValue : Glyphs)
+		{
+			TSharedPtr<FJsonObject> Glyph = GlyphValue->AsObject();
+			FUnicodeCharacterTags Data;
+
+			if(CodePointFieldDecimal.Len() > 0)
+			{
+				if(Glyph->HasTypedField<EJson::Number>(*CodePointFieldDecimal))
+				{
+					Data.Character = Glyph->GetNumberField(*CodePointFieldDecimal);
+				}
+				else if(Glyph->HasTypedField<EJson::String>(*CodePointFieldDecimal))
+				{
+					FString DecimalString = Glyph->GetStringField(*CodePointFieldDecimal);
+					Data.Character = FCString::Strtoi(*DecimalString, nullptr, 10);
+				}
+			}
+			else if(CodePointFieldHexadecimal.Len() > 0)
+			{
+				if(!Glyph->HasTypedField<EJson::String>(*CodePointFieldHexadecimal))
+					continue;
+
+				FString HexString = Glyph->GetStringField(*CodePointFieldHexadecimal);
+				if(!HexString.StartsWith("0x", ESearchCase::IgnoreCase))
+					continue;
+				
+				Data.Character = FCString::Strtoi(*HexString, nullptr, 16);
+			}
+			
+			for(FString &TagField : TagFields){
+				FString Tag = "";				
+				Glyph->TryGetStringField(*TagField, Tag);
+
+				if(Tag.Len() > 0)
+				{
+					Data.Tags.Add(Tag);
+				}
+			}
+
+			Characters.Add(Data);
+		}
+		
+		return true;
 	}
 	
 };

@@ -1,0 +1,22 @@
+{	
+	"format": "UnicodeBrowserGlyphTags_V1",
+	"tagFields": [ "TagA", "TagB" ],
+	"codepointFieldDecimal": "Character",
+	"codepointFieldHexadecimal": false,
+	"glyphs": 	[
+					{
+						"TagA": "<control>",
+						"TagB": "NULL",
+						"Character": 0
+					},
+					{
+						"TagA": "<control>",
+						"TagB": "START OF HEADING",
+						"Character": 1
+					},
+					{
+						"TagB": "DIGIT NINE",
+						"Character": 57
+					}
+				]
+}

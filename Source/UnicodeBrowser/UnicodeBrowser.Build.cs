@@ -53,6 +53,7 @@ public class UnicodeBrowser : ModuleRules
 				"ToolMenus",
 				"ToolWidgets",
 				"UnrealEd",
+				"Json" // required for importer
 			}
 		);
 
