@@ -42,6 +42,7 @@ public:
 	// Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews
 	UPROPERTY()
 	bool bCacheCharacterMetaOnLoad = false;
+	
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, struct FPropertyChangedEvent*);
 	FOnUbOptionsChangedDelegate OnChanged;

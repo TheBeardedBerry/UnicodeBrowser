@@ -57,10 +57,12 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		CurrentRow = MakeShared<FUnicodeBrowserRow>(UnicodeBrowser::InvalidSubChar, EUnicodeBlockRange::Specials, &CurrentFont);
 	}
 
-	SearchBar = SNew(SUbSearchBar)
+	if(!SearchBar.IsValid())
+	{
+		SearchBar = SNew(SUbSearchBar)
 		.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString);
-
-	if(!Menu)
+	}
+	
 	{
 		// generate the settings context menu
 		Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.SettingsMenu");		
@@ -68,8 +70,6 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		SearchBar->CreateMenuSection_Settings(Menu);		
 	}
 
-
-	
 	TSharedPtr<SLayeredImage> FilterImage = SNew(SLayeredImage)
 			.Image(FAppStyle::Get().GetBrush("DetailsView.ViewOptions"))
 			.ColorAndOpacity(FSlateColor::UseForeground());

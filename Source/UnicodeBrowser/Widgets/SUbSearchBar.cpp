@@ -1,5 +1,7 @@
 #include "SUbSearchBar.h"
 
+#include "UnicodeBrowser/UnicodeBrowserWidget.h"
+
 void SUbSearchBar::Construct(const FArguments& InArgs)
 {
 	OnTextChanged = InArgs._OnTextChanged;
@@ -30,29 +32,32 @@ void SUbSearchBar::CreateMenuSection_Settings(UToolMenu *Menu)
 	SettingsMenu.AddEntry(FToolMenuEntry::InitWidget("AutoSetRange",  AutoSetRangeWidget, FText::GetEmpty()));
 
 	*/
-	FUIAction AutoSetRangeAction = FUIAction(
-		FExecuteAction::CreateLambda([this]()
-		{
-			bAutoSetRange = !bAutoSetRange;
-			TriggerUpdate();
-		}),
-		FCanExecuteAction(),
-		FIsActionChecked::CreateLambda([this]() { return bAutoSetRange; })
-	);
-		
-	SettingsMenu.AddMenuEntry("AutoSetRange", INVTEXT("update ranges"), INVTEXT(""), FSlateIcon(), AutoSetRangeAction, EUserInterfaceActionType::ToggleButton);
+	{
+		FUIAction Action(
+			FExecuteAction::CreateLambda([this]()
+			{
+				bAutoSetRange = !bAutoSetRange;
+				TriggerUpdate();
+			}),
+			FCanExecuteAction(),
+			FIsActionChecked::CreateLambda([this]() { return bAutoSetRange; })
+		);
+			
+		SettingsMenu.AddMenuEntry("AutoSetRange", INVTEXT("update ranges"), INVTEXT(""), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+	}
 
-
-	FUIAction CaseSensitiveAction = FUIAction(
-		FExecuteAction::CreateLambda([this]()
-		{
-			bCaseSensitive = !bCaseSensitive;
-			TriggerUpdate();
-		}),
-		FCanExecuteAction(),
-		FIsActionChecked::CreateLambda([this]()	{ return bCaseSensitive; })
-	);
-		
-	SettingsMenu.AddMenuEntry("CaseSensitive", INVTEXT("case sensitive"), INVTEXT("enabled case sensitive search for letters\nthis setting doesn't affect Tag search"), FSlateIcon(), CaseSensitiveAction, EUserInterfaceActionType::ToggleButton);
+	{
+		FUIAction Action(
+			FExecuteAction::CreateLambda([this]()
+			{
+				bCaseSensitive = !bCaseSensitive;
+				TriggerUpdate();
+			}),
+			FCanExecuteAction(),
+			FIsActionChecked::CreateLambda([this]()	{ return bCaseSensitive; })
+		);
+			
+		SettingsMenu.AddMenuEntry("CaseSensitive", INVTEXT("case sensitive"), INVTEXT("enabled case sensitive search for letters\nthis setting doesn't affect Tag search"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+	}
 
 }
