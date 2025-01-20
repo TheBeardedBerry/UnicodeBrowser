@@ -25,14 +25,21 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
+SUnicodeBrowserWidget::~SUnicodeBrowserWidget()
+{
+	UToolMenus::Get()->RemoveMenu("UnicodeBrowser");
+}
+
 void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 {
-	if (!Options)
-	{
-		Options = NewObject<UUnicodeBrowserOptions>();
-		Options->FontInfo = DefaultFont;
-	}
+	if(bInitialized)
+		return;
 
+	bInitialized = true;
+	
+	Options = NewObject<UUnicodeBrowserOptions>();
+	Options->FontInfo = DefaultFont;
+	
 	CurrentFont = Options->FontInfo;
 	
 	Options->OnChanged.RemoveAll(this);
@@ -43,31 +50,25 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		}
 	});
 
-	bool const bIsInitialized = !Rows.IsEmpty();
-	if (!bIsInitialized)
-	{
-		RangeWidgets.Reset();
-		RangeWidgets.Reserve(UnicodeBrowser::GetUnicodeBlockRanges().Num());
-		// note character/font data isn't initialized until first tick after construction
-		// this permits the browser panel to display earlier
-	}
+	RangeWidgets.Reserve(UnicodeBrowser::GetUnicodeBlockRanges().Num());
 	
 	// create a dummy for the preview until the user highlights a character
-	if(!CurrentRow.IsValid()){
-		CurrentRow = MakeShared<FUnicodeBrowserRow>(UnicodeBrowser::InvalidSubChar, EUnicodeBlockRange::Specials, &CurrentFont);
-	}
+	CurrentRow = MakeShared<FUnicodeBrowserRow>(UnicodeBrowser::InvalidSubChar, EUnicodeBlockRange::Specials, &CurrentFont);
+	
 
-	if(!SearchBar.IsValid())
-	{
-		SearchBar = SNew(SUbSearchBar)
-		.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString);
-	}
+	SearchBar = SNew(SUbSearchBar)
+	.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString);
+	
 	
 	// generate the settings context menu
-	UToolMenu* Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.SettingsMenu");		
-	this->CreateMenuSection_Settings(Menu);
-	SearchBar->CreateMenuSection_Settings(Menu);		
+	UToolMenu* Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser");
+
 	
+	UToolMenus::Get()->AssembleMenuHierarchy(Menu,
+	{
+		this->CreateMenuSection_Settings(),
+		SearchBar->CreateMenuSection_Settings()
+	});
 
 	TSharedPtr<SLayeredImage> FilterImage = SNew(SLayeredImage)
 			.Image(FAppStyle::Get().GetBrush("DetailsView.ViewOptions"))
@@ -103,8 +104,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 					SNew(SHorizontalBox)
 					+SHorizontalBox::Slot()
 					[
-						SAssignNew(SearchBar, SUbSearchBar)
-						.OnTextChanged(this, &SUnicodeBrowserWidget::FilterByString)
+						SearchBar.ToSharedRef()
 					]
 					+SHorizontalBox::Slot()
 					.AutoWidth()			
@@ -143,13 +143,13 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 
 	RangeScrollbox->SetScrollBarRightClickDragAllowed(true);
 
-	if(!bIsInitialized){		
-		MarkDirty();
-	}
+	MarkDirty();
 }
 
-void SUnicodeBrowserWidget::CreateMenuSection_Settings(UToolMenu *Menu)
+UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 {
+	UToolMenu *Menu = UToolMenus::Get()->GenerateMenu("UnicodeBrowser.SettingsMenu", FToolMenuContext());
+	
 	FToolMenuSection &GeneralSettingsSection = Menu->AddSection(TEXT("GeneralSettings"), INVTEXT("general settings"));
 	{
 		{
@@ -254,6 +254,8 @@ void SUnicodeBrowserWidget::CreateMenuSection_Settings(UToolMenu *Menu)
 			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserFontSize",  Widget, FText::GetEmpty()));
 		}
 	}
+
+	return Menu;
 }
 
 

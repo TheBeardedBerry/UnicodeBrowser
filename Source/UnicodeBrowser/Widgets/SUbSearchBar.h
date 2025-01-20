@@ -30,5 +30,5 @@ class SUbSearchBar : public SSearchBox {
 			OnTextChanged.ExecuteIfBound(GetText().ToString());
 		}
 
-		void CreateMenuSection_Settings(UToolMenu *Menu);
+		UToolMenu* CreateMenuSection_Settings();
 };

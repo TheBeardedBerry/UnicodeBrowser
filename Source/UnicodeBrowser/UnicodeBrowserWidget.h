@@ -79,6 +79,7 @@ public:
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
 
 public:
+	virtual ~SUnicodeBrowserWidget() override;
 	void Construct(FArguments const& InArgs);
 	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
 	void MarkDirty();
@@ -93,7 +94,8 @@ protected:
 	
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
 	FSlateFontInfo CurrentFont = DefaultFont;
-	
+
+	bool bInitialized = false;
 	bool bDirty = true;
 	
 protected:
@@ -110,6 +112,6 @@ protected:
 	void HandleZoomColumns(float Offset);
 
 private:
-	void CreateMenuSection_Settings(UToolMenu *Menu);
+	UToolMenu* CreateMenuSection_Settings();
 };
 

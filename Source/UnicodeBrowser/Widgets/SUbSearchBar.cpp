@@ -1,7 +1,5 @@
 #include "SUbSearchBar.h"
 
-#include "UnicodeBrowser/UnicodeBrowserWidget.h"
-
 void SUbSearchBar::Construct(const FArguments& InArgs)
 {
 	OnTextChanged = InArgs._OnTextChanged;
@@ -16,22 +14,12 @@ void SUbSearchBar::Construct(const FArguments& InArgs)
 	);
 }
 
-void SUbSearchBar::CreateMenuSection_Settings(UToolMenu *Menu)
+UToolMenu* SUbSearchBar::CreateMenuSection_Settings()
 {
+	UToolMenu *Menu = UToolMenus::Get()->GenerateMenu("UnicodeBrowser.SearchSettings", FToolMenuContext());
+	
 	FToolMenuSection &SettingsMenu = Menu->AddSection(TEXT("SearchSettings"), INVTEXT("search settings"));	
 
-	// widget based example, keep this in for now
-	/*TSharedRef<SCheckBox> AutoSetRangeWidget = SNew(SCheckBox)
-				 .IsChecked(true)
-				 .Padding(FMargin(5, 0, 0, 0))
-				 .OnCheckStateChanged_Lambda([this](ECheckBoxState State) { bAutoSetRange = State == ECheckBoxState::Checked; TriggerUpdate(); })
-				 [
-					 SNew(STextBlock)
-					 .Text(INVTEXT("update ranges"))
-				 ];
-	SettingsMenu.AddEntry(FToolMenuEntry::InitWidget("AutoSetRange",  AutoSetRangeWidget, FText::GetEmpty()));
-
-	*/
 	{
 		FUIAction Action(
 			FExecuteAction::CreateLambda([this]()
@@ -60,4 +48,5 @@ void SUbSearchBar::CreateMenuSection_Settings(UToolMenu *Menu)
 		SettingsMenu.AddMenuEntry("CaseSensitive", INVTEXT("case sensitive"), INVTEXT("enabled case sensitive search for letters\nthis setting doesn't affect Tag search"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
 	}
 
+	return Menu;
 }
