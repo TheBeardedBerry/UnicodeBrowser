@@ -233,7 +233,15 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.SizeRule(SSplitter::FractionOfParent)
 				.Value(0.7)
 				[
-					SAssignNew(RangeScrollbox, SScrollBox)					
+					SAssignNew(RangeScrollbox, SScrollBox).
+					OnUserScrolled_Lambda([this](float ScrollOffset /* see FOnUserScrolled */)
+					{
+						for(auto &[Range, RangeWidget] : RangeWidgets)
+						{
+							// tell the invalidation boxes that they got moved
+							RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
+						}
+					})
 				]
 				+ SSplitter::Slot()
 				.SizeRule(SSplitter::FractionOfParent)
