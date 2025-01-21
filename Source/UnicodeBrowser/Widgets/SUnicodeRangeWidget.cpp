@@ -10,11 +10,14 @@ void SUnicodeRangeWidget::Construct(const FArguments& InArgs)
 	OnZoomFontSize = InArgs._OnZoomFontSize;
 	OnZoomColumnCount = InArgs._OnZoomColumnCount;
 
-	SInvalidationPanel::Construct(SInvalidationPanel::FArguments());
+	SInvalidationPanel::Construct(SInvalidationPanel::FArguments()
+		.Clipping(EWidgetClipping::ClipToBoundsAlways));
+	
 	SetCanCache(true);
 	
+		
 	ChildSlot [
-		SNew(SExpandableArea)
+		SAssignNew(ExpandableArea, SExpandableArea)
 			.HeaderPadding(FMargin(2, 4))
 			.HeaderContent()
 			[
@@ -49,6 +52,11 @@ FReply SUnicodeRangeWidget::OnMouseWheel(const FGeometry& MyGeometry, const FPoi
 	}
 
 	return FReply::Unhandled();
+}
+
+void SUnicodeRangeWidget::OnScroll()
+{
+	Invalidate(EInvalidateWidgetReason::Layout);
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

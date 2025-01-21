@@ -8,6 +8,8 @@
 #include "Framework/Application/SlateApplication.h"
 
 #include "Modules/ModuleManager.h"
+#include "Sampling/GridSampler.h"
+#include "Spatial/DenseGrid2.h"
 
 #include "Widgets/SUnicodeBrowserSidePanel.h"
 #include "Widgets/SUnicodeCharacterGridEntry.h"
@@ -233,13 +235,13 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.SizeRule(SSplitter::FractionOfParent)
 				.Value(0.7)
 				[
-					SAssignNew(RangeScrollbox, SScrollBox).
-					OnUserScrolled_Lambda([this](float ScrollOffset /* see FOnUserScrolled */)
+					SAssignNew(RangeScrollbox, SScrollBox)
+					.OnUserScrolled_Lambda([this](float ScrollOffset /* see FOnUserScrolled */)
 					{
 						for(auto &[Range, RangeWidget] : RangeWidgets)
 						{
 							// tell the invalidation boxes that they got moved
-							RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
+							RangeWidget->OnScroll();
 						}
 					})
 				]
@@ -642,7 +644,7 @@ void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> Ran
 	GridPanel->ClearChildren();
 
 	if (!Rows.Contains(RangeWidget->GetRange().Index)) return;
-
+	
 	auto const NumCols = UUnicodeBrowserOptions::Get()->NumCols;
 	GridPanel->SetMinDesiredSlotHeight(CurrentFont.Size * 2);
 	GridPanel->SetMinDesiredSlotWidth(CurrentFont.Size * 2);

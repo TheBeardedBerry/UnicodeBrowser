@@ -30,10 +30,13 @@ public:
 	TSharedRef<SUniformGridPanel> GetGridPanel() const { return GridPanel.ToSharedRef(); };
 	
 	virtual FReply OnMouseWheel(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;;
-	
+
+	void OnScroll();
+
 private:
 	FUnicodeBlockRange Range = FUnicodeBlockRange(EUnicodeBlockRange::ControlCharacter, INVTEXT("default"), FInt32Range(0, 1));
 	TSharedPtr<SUniformGridPanel> GridPanel;
+	TSharedPtr<SExpandableArea> ExpandableArea;
 
 	FZoomEvent OnZoomFontSize;
 	FZoomEvent OnZoomColumnCount;

@@ -75,13 +75,6 @@ void SUnicodeBrowserSidePanel::Construct(const FArguments& InArgs)
 							SAssignNew(CurrentCharacterDetails, SUnicodeCharacterInfo).Row(UnicodeBrowser.Pin().Get()->CurrentRow)
 						]
 					]
-					/*+ SVerticalBox::Slot()
-					.AutoHeight()
-					.VAlign(VAlign_Top)
-					.HAlign(HAlign_Fill)
-					[
-						UUnicodeBrowserOptions::MakePropertyEditor(UnicodeBrowser.Pin().Get()->Options)
-					]*/
 					+ SVerticalBox::Slot()
 					.FillHeight(1)
 					.FillContentHeight(1)
@@ -128,7 +121,7 @@ TSharedRef<SExpandableArea> SUnicodeBrowserSidePanel::MakeBlockRangesSidebar()
 			for(auto &[Range, RangeWidget] : UnicodeBrowser.Pin()->RangeWidgets)
 			{
 				// tell the invalidation boxes that they got moved
-				RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
+				RangeWidget->OnScroll();
 			}
 		}
 	});
