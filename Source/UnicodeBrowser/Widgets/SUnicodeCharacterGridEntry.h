@@ -25,6 +25,10 @@ public:
 
 	void SetFontInfo(FSlateFontInfo &FontInfoIn);
 
+	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
+
+	virtual FReply OnMouseButtonDoubleClick(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 private:
 	TSharedPtr<FUnicodeBrowserRow> UnicodeCharacter;
 	TSharedPtr<STextBlock> TextBlock;

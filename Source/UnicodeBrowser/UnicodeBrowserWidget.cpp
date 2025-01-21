@@ -337,7 +337,7 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 					.Text(INVTEXT("columns"))
 				]
 				+SHorizontalBox::Slot()
-				.Padding(10, 0, 0, 0)
+				.Padding(10, 0, 10, 0)
 				.VAlign(VAlign_Center)
 				[
 					SNew(SSpinBox<int32>)
@@ -614,11 +614,6 @@ void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> Ran
 		TSharedPtr<SUnicodeCharacterGridEntry> GridCell = SNew(SUnicodeCharacterGridEntry)
 				.FontInfo(CurrentFont)
 				.UnicodeCharacter(Row)
-				.OnMouseDoubleClick_Lambda([Character = Row->Character](FGeometry const& Geometry, FPointerEvent const& PointerEvent)
-				{
-					FPlatformApplicationMisc::ClipboardCopy(*Character);
-					return FReply::Handled();
-				})
 				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row);
 
 		RangeWidget->Characters.Add(GridCell);

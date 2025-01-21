@@ -4,6 +4,7 @@
 #include "SUnicodeCharacterGridEntry.h"
 
 #include "SlateOptMacros.h"
+#include "HAL/PlatformApplicationMisc.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -14,7 +15,7 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 	SBorder::Construct(SBorder::FArguments()
 		.BorderImage(nullptr)
 		.OnMouseMove(InArgs._OnMouseMove)
-		.OnMouseDoubleClick(InArgs._OnMouseDoubleClick));
+	);		
 	
 	if(!UnicodeCharacter.IsValid())
 	{
@@ -22,14 +23,13 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 		return;
 	}
 
-	SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)));
-	
 	ChildSlot [
 		SAssignNew(TextBlock, STextBlock)
 			.Font(InArgs._FontInfo)
 			.IsEnabled(true)
 			.Justification(ETextJustify::Center)
-			.Text(FText::FromString(FString::Printf(TEXT("%s"), *UnicodeCharacter->Character)))			
+			.Text(FText::FromString(*UnicodeCharacter->Character))
+			.Visibility(EVisibility::HitTestInvisible)
 		];
 	
 }
@@ -37,6 +37,29 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 void SUnicodeCharacterGridEntry::SetFontInfo(FSlateFontInfo& FontInfoIn)
 {
 	TextBlock->SetFont(FontInfoIn);
+}
+
+void SUnicodeCharacterGridEntry::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X.\nDouble-Click to copy: %s."), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)));
+	SBorder::OnMouseEnter(MyGeometry, MouseEvent);
+	SetColorAndOpacity(FLinearColor(0, 0.44, 0.88));
+}
+
+void SUnicodeCharacterGridEntry::OnMouseLeave(const FPointerEvent& MouseEvent)
+{
+	SBorder::OnMouseLeave(MouseEvent);
+	SetColorAndOpacity(FLinearColor::White);
+}
+
+FReply SUnicodeCharacterGridEntry::OnMouseButtonDoubleClick(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	SBorder::OnMouseButtonDoubleClick(MyGeometry, MouseEvent);
+	// the color and tooltip get reset by MouseEnter/MouseLeave 
+	SetColorAndOpacity(FLinearColor(0.35, 1.0, 0.35, 1.0));
+	SetToolTipText(FText::FromString(FString::Printf(TEXT("Character copied to clipboard"), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)));
+	FPlatformApplicationMisc::ClipboardCopy(*UnicodeCharacter->Character);
+	return FReply::Handled();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
