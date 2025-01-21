@@ -1,5 +1,4 @@
 // all rights reserved
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,9 +8,7 @@
 #include "Widgets/SInvalidationPanel.h"
 #include "Widgets/Layout/SUniformGridPanel.h"
 
-/**
- * 
- */
+
 class UNICODEBROWSER_API SUnicodeRangeWidget : public SInvalidationPanel
 {
 public:

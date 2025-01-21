@@ -1,19 +1,13 @@
 // SPDX-FileCopyrightText: 2025 NTY.studio
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "DataAsset_FontTags.h"
-
 #include "Styling/CoreStyle.h"
-
 #include "UObject/Object.h"
-
 #include "UnicodeBrowserOptions.generated.h"
 
-/**
- * 
- */
+
 UCLASS(Config=Engine, defaultconfig, meta = (DisplayName="UnicodeBrowser"))
 class UNICODEBROWSER_API UUnicodeBrowserOptions : public UDeveloperSettings
 {
@@ -26,6 +20,10 @@ public:
 	UPROPERTY(Config, EditAnywhere, meta=(UIMin=1))
 	int32 NumCols = 16;
 
+	// allow to toggle the right side panel on/off
+	UPROPERTY(Config, EditAnywhere)
+	bool bShowSidePanel = true;
+	
 	// Show Characters which can't be displayed by the font
 	UPROPERTY(Config, EditAnywhere)
 	bool bShowMissing = false;
@@ -41,6 +39,15 @@ public:
 	// pick unicode range based on what's available in the font
 	UPROPERTY(Config, EditAnywhere)
 	bool bAutoSetRangeOnFontChange = false;
+
+	UPROPERTY(Config, EditAnywhere)
+	bool bSearch_AutoSetRange = true;
+
+	UPROPERTY(Config, EditAnywhere)
+	bool bSearch_CaseSensitive = false;
+
+	UPROPERTY(Config, EditAnywhere)
+	bool bRangeSelector_HideEmptyRanges = false;
 	
 	FSlateFontInfo& GetFontInfo()
 	{
@@ -120,7 +127,10 @@ public:
 		
 	}
 
-
+	static UUnicodeBrowserOptions* Get()
+	{
+		return GetMutableDefault<UUnicodeBrowserOptions>();
+	}
 
 private:
 	UPROPERTY(Transient, DisplayName="Font")

@@ -60,10 +60,12 @@ void SUnicodeBlockRangeSelector::Construct(const FArguments& InArgs)
 		+SVerticalBox::Slot()
 		.AutoHeight()
 		[
-			SAssignNew(CheckBox_HideEmptyRanges, SCheckBox)
-			.IsChecked(true)
+			SNew(SCheckBox)
+			.IsChecked(UUnicodeBrowserOptions::Get()->bRangeSelector_HideEmptyRanges)
 			.OnCheckStateChanged_Lambda([this](ECheckBoxState State)
 			{
+				UUnicodeBrowserOptions::Get()->bRangeSelector_HideEmptyRanges = State == ECheckBoxState::Checked;
+				UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 				UpdateRowVisibility(nullptr);
 			})
 			[
@@ -114,7 +116,7 @@ void SUnicodeBlockRangeSelector::UpdateRowVisibility(FSlateFontInfo* FontInfo)
 	if(!UnicodeBrowser.IsValid())
 		return;
 		
-	bool const bHideEmptyRanges = CheckBox_HideEmptyRanges->IsChecked();
+	bool const bHideEmptyRanges = UUnicodeBrowserOptions::Get()->bRangeSelector_HideEmptyRanges;
 	for(auto &[Range, ItemIndex] : CheckboxIndices)
 	{
 		int32 const CharacterCount = UnicodeBrowser.Pin().Get()->Rows.Contains(Range) ? UnicodeBrowser.Pin().Get()->Rows.FindChecked(Range).Num() : 0;

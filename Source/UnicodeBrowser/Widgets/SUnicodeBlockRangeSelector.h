@@ -32,8 +32,6 @@ public:
 	{
 		return CheckboxIndices.Contains(Range) ? CheckBoxList->IsItemChecked(CheckboxIndices.FindChecked(Range)) : false;
 	}
-
-	TSharedPtr<SCheckBox> CheckBox_HideEmptyRanges;
 	
 protected:	
 	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index

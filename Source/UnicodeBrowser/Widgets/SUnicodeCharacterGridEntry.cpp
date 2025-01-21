@@ -1,6 +1,4 @@
 // all rights reserved
-
-
 #include "SUnicodeCharacterGridEntry.h"
 
 #include "SlateOptMacros.h"

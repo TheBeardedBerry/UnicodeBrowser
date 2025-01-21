@@ -17,10 +17,7 @@ class SUbSearchBar : public SSearchBox {
 		/** Constructs this widget with InArgs */
 		void Construct(const FArguments& InArgs);
 	
-		FOnTextChanged OnTextChanged;
-
-		bool bAutoSetRange = true;
-		bool bCaseSensitive = false;
+		FOnTextChanged OnTextChanged;		
 	
 	protected:
 

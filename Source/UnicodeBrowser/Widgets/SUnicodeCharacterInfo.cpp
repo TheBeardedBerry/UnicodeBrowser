@@ -20,9 +20,9 @@ void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
 
 	FText TagsText = FText::GetEmpty();
 	
-	if(SUnicodeBrowserWidget::GetOptions()->Preset &&SUnicodeBrowserWidget::GetOptions()->Preset->SupportsFont(*InRow->FontInfo))
+	if(UUnicodeBrowserOptions::Get()->Preset && UUnicodeBrowserOptions::Get()->Preset->SupportsFont(*InRow->FontInfo))
 	{
-		TagsText = FText::FromString(TEXT("Tags: ") + FString::Join(SUnicodeBrowserWidget::GetOptions()->Preset->GetCodepointTags(InRow->Codepoint), TEXT(", ")));			
+		TagsText = FText::FromString(TEXT("Tags: ") + FString::Join(UUnicodeBrowserOptions::Get()->Preset->GetCodepointTags(InRow->Codepoint), TEXT(", ")));			
 	}
 	
 	

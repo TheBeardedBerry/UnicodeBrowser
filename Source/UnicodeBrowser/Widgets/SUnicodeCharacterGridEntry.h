@@ -1,14 +1,11 @@
 // all rights reserved
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UnicodeBrowser/UnicodeBrowserRow.h"
 #include "Widgets/SCompoundWidget.h"
 
-/**
- * 
- */
+
 class UNICODEBROWSER_API SUnicodeCharacterGridEntry : public SBorder
 {
 public:

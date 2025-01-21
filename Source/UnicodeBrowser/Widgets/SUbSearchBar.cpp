@@ -1,5 +1,7 @@
 #include "SUbSearchBar.h"
 
+#include "UnicodeBrowser/UnicodeBrowserOptions.h"
+
 void SUbSearchBar::Construct(const FArguments& InArgs)
 {
 	OnTextChanged = InArgs._OnTextChanged;
@@ -24,11 +26,12 @@ UToolMenu* SUbSearchBar::CreateMenuSection_Settings()
 		FUIAction Action(
 			FExecuteAction::CreateLambda([this]()
 			{
-				bAutoSetRange = !bAutoSetRange;
+				UUnicodeBrowserOptions::Get()->bSearch_AutoSetRange = !UUnicodeBrowserOptions::Get()->bSearch_AutoSetRange;
+				UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 				TriggerUpdate();
 			}),
 			FCanExecuteAction(),
-			FIsActionChecked::CreateLambda([this]() { return bAutoSetRange; })
+			FIsActionChecked::CreateLambda([this]() { return UUnicodeBrowserOptions::Get()->bSearch_AutoSetRange; })
 		);
 			
 		SettingsMenu.AddMenuEntry("AutoSetRange", INVTEXT("update ranges"), INVTEXT(""), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
@@ -38,11 +41,12 @@ UToolMenu* SUbSearchBar::CreateMenuSection_Settings()
 		FUIAction Action(
 			FExecuteAction::CreateLambda([this]()
 			{
-				bCaseSensitive = !bCaseSensitive;
+				UUnicodeBrowserOptions::Get()->bSearch_CaseSensitive = !UUnicodeBrowserOptions::Get()->bSearch_CaseSensitive;
+				UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 				TriggerUpdate();
 			}),
 			FCanExecuteAction(),
-			FIsActionChecked::CreateLambda([this]()	{ return bCaseSensitive; })
+			FIsActionChecked::CreateLambda([this]()	{ return UUnicodeBrowserOptions::Get()->bSearch_CaseSensitive; })
 		);
 			
 		SettingsMenu.AddMenuEntry("CaseSensitive", INVTEXT("case sensitive"), INVTEXT("enabled case sensitive search for letters\nthis setting doesn't affect Tag search"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);

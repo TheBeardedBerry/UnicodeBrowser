@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Fonts/FontMeasure.h"
 #include "Fonts/UnicodeBlockRange.h"
 

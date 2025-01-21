@@ -84,10 +84,6 @@ public:
 	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
 	void MarkDirty();
 	
-	static UUnicodeBrowserOptions* GetOptions()
-	{
-		return GetMutableDefault<UUnicodeBrowserOptions>();
-	};
 	
 protected:	
 	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
@@ -116,5 +112,6 @@ protected:
 
 private:
 	UToolMenu* CreateMenuSection_Settings();
+	void SetSidePanelVisibility(bool bVisible = true);
 };
 
