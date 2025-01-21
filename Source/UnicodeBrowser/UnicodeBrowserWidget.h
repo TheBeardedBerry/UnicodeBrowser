@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "Containers/Ticker.h"
+
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
@@ -29,11 +31,12 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(FArguments const& InArgs);
-	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
+	virtual ~SUnicodeBrowserWidget() override;
 	void Update();
 
 protected:
 	FDelegateHandle OnOptionsChangedHandle;
+	FTSTicker::FDelegateHandle NextTickHandle;
 	TArrayView<FUnicodeBlockRange const> Ranges; // all known Unicode ranges
 	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index 
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
@@ -44,7 +47,7 @@ protected:
 	TSharedPtr<SScrollBox> RangeScrollbox;
 	TSharedPtr<STextBlock> CurrentCharacterView;
 	TSharedPtr<SUbCheckBoxList> RangeSelector;
-	bool bDirty = true;
+	bool bDirty = false;
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
 
 protected:

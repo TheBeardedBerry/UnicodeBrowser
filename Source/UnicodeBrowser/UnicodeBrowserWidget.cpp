@@ -227,27 +227,25 @@ void SUnicodeBrowserWidget::UpdateRangeVisibility(int32 const Index)
 
 void SUnicodeBrowserWidget::MarkDirty()
 {
-	// schedule an update on the next tick
-	SetCanTick(true);
+	if (bDirty) return; // already dirty
 	bDirty = true;
-}
-
-void SUnicodeBrowserWidget::Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime)
-{
-	if (bDirty)
-	{
-		if (IsConstructed()) // wait for the widget to be constructed before updating
-		{
-			bDirty = false;
-			SetCanTick(false);
-			Update();
-		}
-	}
-	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+	// schedule an update on the next tick
+	NextTickHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateLambda(
+			[this](float DeltaTime)
+			{
+				if (!IsConstructed()) return true; // wait for the widget to be constructed before updating
+				bDirty = false;
+				Update();
+				return false;
+			}
+		)
+	);
 }
 
 void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 {
+	SetCanTick(false);
 	if (!Options)
 	{
 		Options = NewObject<UUnicodeBrowserOptions>();
@@ -381,6 +379,16 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 			]
 		]
 	];
+}
+
+SUnicodeBrowserWidget::~SUnicodeBrowserWidget()
+{
+	if (Options)
+	{
+		Options->OnChanged.Remove(OnOptionsChangedHandle);
+	}
+	OnOptionsChangedHandle.Reset();
+	FTSTicker::GetCoreTicker().RemoveTicker(NextTickHandle);
 }
 
 void SUnicodeBrowserWidget::HandleZoomFont(float const Offset)
