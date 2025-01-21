@@ -103,6 +103,7 @@ protected:
 	void UpdateCharacters();
 	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget);	
 	void RebuildGrid();
+	void InvalidateGrid();
 
 	void FilterByString(FString Needle);
 	
@@ -114,4 +115,5 @@ private:
 	UToolMenu* CreateMenuSection_Settings();
 	void SetSidePanelVisibility(bool bVisible = true);
 };
+
 

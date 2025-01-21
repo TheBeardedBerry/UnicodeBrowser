@@ -1,10 +1,6 @@
 // all rights reserved
-
-
 #include "SUnicodeRangeWidget.h"
-
 #include "SlateOptMacros.h"
-#include "Widgets/Layout/SScaleBox.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -27,14 +23,8 @@ void SUnicodeRangeWidget::Construct(const FArguments& InArgs)
 			]
 			.BodyContent()
 			[
-				SNew(SScaleBox)
-				.Stretch(EStretch::ScaleToFit)
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Fill)
-				[
-					SAssignNew(GridPanel, SUniformGridPanel)
-					.SlotPadding(FMargin(6.f, 4.f))
-				]
+				SAssignNew(GridPanel, SUniformGridPanel)
+				.SlotPadding(FMargin(6.f, 4.f))				
 			]
 	];
 }

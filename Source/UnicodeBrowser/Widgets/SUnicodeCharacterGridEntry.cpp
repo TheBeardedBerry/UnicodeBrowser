@@ -35,6 +35,7 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 void SUnicodeCharacterGridEntry::SetFontInfo(FSlateFontInfo& FontInfoIn)
 {
 	TextBlock->SetFont(FontInfoIn);
+	Invalidate(EInvalidateWidgetReason::Layout);
 }
 
 void SUnicodeCharacterGridEntry::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)

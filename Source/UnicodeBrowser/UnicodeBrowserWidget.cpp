@@ -442,7 +442,10 @@ void SUnicodeBrowserWidget::Update(bool bForceRepopulateCharacters)
 						.OnZoomColumnCount(this, &SUnicodeBrowserWidget::HandleZoomColumns)
 					);
 
-				RangeScrollbox->AddSlot() [ RangeWidgets.FindChecked(Range.Index).ToSharedRef() ];
+				RangeScrollbox->AddSlot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Top)
+					[ RangeWidgets.FindChecked(Range.Index).ToSharedRef() ];
 			}			
 		}
 
@@ -535,6 +538,14 @@ void SUnicodeBrowserWidget::RebuildGrid()
 	for (auto & [Range, RangeWidget] : RangeWidgets)
 	{
 		RebuildGridRange(RangeWidget);
+	}
+}
+
+void SUnicodeBrowserWidget::InvalidateGrid()
+{
+	for (auto & [Range, RangeWidget] : RangeWidgets)
+	{
+		RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
 	}
 }
 
@@ -661,6 +672,7 @@ void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 {	
 	CurrentFont.Size = FMath::Max(1.0f, CurrentFont.Size + Offset);
 	UUnicodeBrowserOptions::Get()->SetFontInfo(CurrentFont);
+	InvalidateGrid();
 }
 
 
