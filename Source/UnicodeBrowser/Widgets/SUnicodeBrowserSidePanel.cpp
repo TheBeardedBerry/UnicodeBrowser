@@ -75,13 +75,13 @@ void SUnicodeBrowserSidePanel::Construct(const FArguments& InArgs)
 							SAssignNew(CurrentCharacterDetails, SUnicodeCharacterInfo).Row(UnicodeBrowser.Pin().Get()->CurrentRow)
 						]
 					]
-					+ SVerticalBox::Slot()
+					/*+ SVerticalBox::Slot()
 					.AutoHeight()
 					.VAlign(VAlign_Top)
 					.HAlign(HAlign_Fill)
 					[
 						UUnicodeBrowserOptions::MakePropertyEditor(UnicodeBrowser.Pin().Get()->Options)
-					]
+					]*/
 					+ SVerticalBox::Slot()
 					.FillHeight(1)
 					.FillContentHeight(1)

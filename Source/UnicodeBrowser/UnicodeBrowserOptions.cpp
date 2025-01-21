@@ -2,6 +2,7 @@
 
 #include "UnicodeBrowserOptions.h"
 
+#include "IStructureDetailsView.h"
 #include "PropertyEditorModule.h"
 
 #include "Modules/ModuleManager.h"
@@ -17,9 +18,21 @@ TSharedRef<IDetailsView> UUnicodeBrowserOptions::MakePropertyEditor(UUnicodeBrow
 	DetailsViewArgs.bShowOptions = false;
 	DetailsViewArgs.bShowObjectLabel = false;
 	DetailsViewArgs.bLockable = false;
+
+	
 	auto FontDetailsView = PropertyEditor.CreateDetailView(DetailsViewArgs);
 	FontDetailsView->SetObject(Options);
 	return FontDetailsView;
+}
+
+TSharedRef<SWidget> UUnicodeBrowserOptions::MakePropertyEditorFont(UUnicodeBrowserOptions* Options)
+{
+	FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	TSharedRef<FStructOnScope> StructOnScope = MakeShared<FStructOnScope>(FSlateFontInfo::StaticStruct(), (uint8*)&Options->FontInfo);
+	FDetailsViewArgs DetailsViewSettings;
+	DetailsViewSettings.bAllowSearch = false;
+	DetailsViewSettings.NotifyHook = Options; // send post edit notification to the object
+	return PropertyEditor.CreateStructureDetailView(DetailsViewSettings, FStructureDetailsViewArgs(), StructOnScope,FText::GetEmpty())->GetWidget().ToSharedRef();				
 }
 
 void UUnicodeBrowserOptions::PostInitProperties()

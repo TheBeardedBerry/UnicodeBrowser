@@ -15,14 +15,16 @@
  * 
  */
 UCLASS(Hidden, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "Font Options")
-class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject
+class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject, public FNotifyHook
 {
 	GENERATED_BODY()
 
 public:
 	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
 
-	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient, DisplayName="Font")
+	static TSharedRef<SWidget> MakePropertyEditorFont(UUnicodeBrowserOptions* Options);
+
+	UPROPERTY(EditAnywhere, DisplayName="Font")
 	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 
 	UPROPERTY(EditAnywhere, Transient, DisplayName="Preset")
@@ -49,4 +51,11 @@ public:
 
 	virtual void PostInitProperties() override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	// FNotifyHook Implementation
+	virtual void NotifyPostChange( const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged) override
+	{
+		OnChanged.Broadcast(nullptr);
+	}
+	// FNotifyHook Implementation End
 };

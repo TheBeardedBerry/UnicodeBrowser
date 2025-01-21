@@ -1,6 +1,7 @@
 ﻿// SPDX-FileCopyrightText: 2025 NTY.studio
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
+#include "ISinglePropertyView.h"
 #include "SlateOptMacros.h"
 #include "Fonts/UnicodeBlockRange.h"
 
@@ -27,7 +28,8 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 SUnicodeBrowserWidget::~SUnicodeBrowserWidget()
 {
-	UToolMenus::Get()->RemoveMenu("UnicodeBrowser");
+	UToolMenus::Get()->RemoveMenu("UnicodeBrowser.Settings");
+	UToolMenus::Get()->RemoveMenu("UnicodeBrowser.Font");
 }
 
 void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
@@ -61,9 +63,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	
 	
 	// generate the settings context menu
-	UToolMenu* Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser");
-
-	
+	UToolMenu* Menu = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.Settings");	
 	UToolMenus::Get()->AssembleMenuHierarchy(Menu,
 	{
 		this->CreateMenuSection_Settings(),
@@ -79,7 +79,6 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		.ContentPadding(0.0f)
 		.ForegroundColor( FSlateColor::UseForeground() )
 		.ButtonStyle( FAppStyle::Get(), "SimpleButton" )
-		.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("ViewOptions")))
 		.MenuContent()
 		[			
 			UToolMenus::Get()->GenerateWidget(Menu->GetMenuName(), Menu)			
@@ -87,6 +86,51 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		.ButtonContent()
 		[
 			FilterImage.ToSharedRef()
+		];
+
+
+	// generate the settings context menu
+	UToolMenu* MenuFont = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.Font");
+
+	FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	
+	FToolMenuSection &PresetSettingsSection = MenuFont->AddSection(TEXT("PresetSettings"), INVTEXT("preset"));
+	{
+		FSinglePropertyParams SinglePropertyParams;
+		SinglePropertyParams.NamePlacement = EPropertyNamePlacement::Type::Hidden;
+		TSharedRef<SWidget> Widget = SNew(SBox)
+			.Padding(15, 0, 0, 0)
+			[
+				PropertyEditor.CreateSingleProperty(Options, "Preset", SinglePropertyParams).ToSharedRef()
+			];
+				
+		PresetSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontInfo",  Widget, FText::GetEmpty()));
+	}
+	
+	FToolMenuSection &FontSettingsSection = MenuFont->AddSection(TEXT("FontSettings"), INVTEXT("font"));
+	{		
+		TSharedRef<SWidget> Widget = SNew(SBox)
+			.Padding(15, 0, 0, 0)
+			[
+				UUnicodeBrowserOptions::MakePropertyEditorFont(Options)
+			];
+			
+		FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontInfo",  Widget, FText::GetEmpty()));
+	}
+	
+	TSharedPtr<SComboButton> SettingsButtonFont = SNew( SComboButton )
+		.HasDownArrow(true)
+		.ContentPadding(0.0f)
+		.ForegroundColor( FSlateColor::UseForeground() )
+		.ButtonStyle( FAppStyle::Get(), "SimpleButton" )
+		.MenuContent()
+		[			
+			UToolMenus::Get()->GenerateWidget(MenuFont->GetMenuName(), MenuFont)			
+		]
+		.ButtonContent()
+		[
+			SNew(STextBlock)
+			.Text(INVTEXT("Preset / Font"))
 		];
 	
 	
@@ -111,7 +155,24 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 					[
 						SNew(SSpacer)
 						.Size(FVector2D(10, 1))
+					]					
+					+SHorizontalBox::Slot()
+					.AutoWidth()			
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(10, 1))
+					]					
+					+SHorizontalBox::Slot()
+					.AutoWidth()			
+					[
+						SettingsButtonFont.ToSharedRef()
 					]
+					+SHorizontalBox::Slot()
+					.AutoWidth()			
+					[
+						SNew(SSpacer)
+						.Size(FVector2D(10, 1))
+					]					
 					+SHorizontalBox::Slot()
 					.AutoWidth()			
 					[
@@ -148,7 +209,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 
 UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 {
-	UToolMenu *Menu = UToolMenus::Get()->GenerateMenu("UnicodeBrowser.SettingsMenu", FToolMenuContext());
+	UToolMenu *Menu = UToolMenus::Get()->GenerateMenu("UnicodeBrowser.Settings.General_Display", FToolMenuContext());
 	
 	FToolMenuSection &GeneralSettingsSection = Menu->AddSection(TEXT("GeneralSettings"), INVTEXT("general settings"));
 	{
