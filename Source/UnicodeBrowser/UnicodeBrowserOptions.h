@@ -74,7 +74,7 @@ public:
 
 			// set to default if the current isn't valid
 			if(!bHasValidTypeface){
-				FontTypeFace = Font->CompositeFont.DefaultTypeface.Fonts[0].Name;
+				FontTypeFace = Font->CompositeFont.DefaultTypeface.Fonts.Num() > 0 ? Font->CompositeFont.DefaultTypeface.Fonts[0].Name : "Default";
 			}
 		}
 		else

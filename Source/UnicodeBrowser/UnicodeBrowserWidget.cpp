@@ -157,7 +157,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 			]
 		];
 			
-		FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserFontSize",  Widget, FText::GetEmpty()));
+		FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserFontSize",  Widget, FText::GetEmpty(), false, false, false, INVTEXT("you can use CTRL + MouseWheel to adjust font size in the browser")));
 	}
 	
 	TSharedPtr<SComboButton> SettingsButtonFont = SNew( SComboButton )
@@ -369,7 +369,7 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 				]
 			];
 			
-			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserNumColumns",  Widget, FText::GetEmpty()));
+			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserNumColumns",  Widget, FText::GetEmpty(), false, false, false, INVTEXT("you can use CTRL + Shift + MouseWheel to adjust column count in the browser")));
 		}
 		
 		
@@ -467,10 +467,18 @@ void SUnicodeBrowserWidget::Update(bool bForceRepopulateCharacters)
 			}
 		}
 	}
+
 	
-	if(!bIsInitialized && SidePanel.IsValid() && SidePanel->RangeSelector.IsValid()){
-		// default preset		
-		SidePanel->RangeSelector->SetRanges(UnicodeBrowser::SymbolRanges);
+	if(!bIsInitialized){
+		if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid())
+		{
+			// only use a default preset if this option is disabled, otherwise it causes trouble when reopening the Tab while a valid font is still set in UUnicodeBrowserOptions 
+			if(!UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
+			{
+				// default preset		
+				SidePanel->RangeSelector->SetRanges(UnicodeBrowser::SymbolRanges);
+			}	
+		}
 	}
 	
 	RebuildGrid();

@@ -2,7 +2,6 @@
 
 #include "UnicodeBrowser.h"
 
-#include "LevelEditor.h"
 #include "ToolMenus.h"
 #include "UnicodeBrowserCommands.h"
 #include "UnicodeBrowserStyle.h"
@@ -14,14 +13,12 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Views/SListView.h"
 
-static const FName UnicodeBrowserTabName("� Unicode Browser");
+static const FName UnicodeBrowserTabName("UnicodeBrowser");
 
 #define LOCTEXT_NAMESPACE "FUnicodeBrowserModule"
 
 void FUnicodeBrowserModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	
 	FUnicodeBrowserStyle::Initialize();
 	FUnicodeBrowserStyle::ReloadTextures();
 
@@ -37,15 +34,13 @@ void FUnicodeBrowserModule::StartupModule()
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FUnicodeBrowserModule::RegisterMenus));
 	
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(UnicodeBrowserTabName, FOnSpawnTab::CreateRaw(this, &FUnicodeBrowserModule::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("FUnicodeBrowserTabTitle", "� Unicode Browser"))
+		.SetIcon(FSlateIcon(FUnicodeBrowserStyle::GetStyleSetName(), "UnicodeBrowser.OpenPluginWindow")) 
+		.SetDisplayName(LOCTEXT("FUnicodeBrowserTabTitle", "Unicode Browser"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
 void FUnicodeBrowserModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
-
 	UToolMenus::UnRegisterStartupCallback(this);
 
 	UToolMenus::UnregisterOwner(this);
@@ -61,7 +56,8 @@ void FUnicodeBrowserModule::ShutdownModule()
 TSharedRef<SDockTab> FUnicodeBrowserModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	return SNew(SDockTab)
-		.TabRole(ETabRole::MajorTab)
+	
+		.TabRole(ETabRole::NomadTab)
 		[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
@@ -85,22 +81,15 @@ void FUnicodeBrowserModule::RegisterMenus()
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
 	FToolMenuOwnerScoped OwnerScoped(this);
 
+	// register to all Menu => Window => Tools => Unicode Browser
 	{
-		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("MainFrame.MainMenu.Window");
 		{
-			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
-			Section.AddMenuEntryWithCommandList(FUnicodeBrowserCommands::Get().OpenPluginWindow, PluginCommands);
-		}
-	}
-
-	{
-		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
-		{
-			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Settings");
+			if(FToolMenuSection *Section = &Menu->FindOrAddSection("Tools"))
 			{
-				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FUnicodeBrowserCommands::Get().OpenPluginWindow));
-				Entry.SetCommandList(PluginCommands);
-			}
+				if(Section->Label.Get(FText::GetEmpty()).IsEmpty()) Section->Label = INVTEXT("TOOLS");
+				Section->AddMenuEntryWithCommandList(FUnicodeBrowserCommands::Get().OpenPluginWindow, PluginCommands);	
+			}			
 		}
 	}
 }

@@ -44,7 +44,7 @@ TSharedRef< FSlateStyleSet > FUnicodeBrowserStyle::Create()
 {
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("UnicodeBrowserStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("UnicodeBrowser")->GetBaseDir() / TEXT("Resources"));
-
+	
 	Style->Set("UnicodeBrowser.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
 
 	return Style;
