@@ -10,23 +10,21 @@ void SUnicodeCharacterInfo::Construct(FArguments const& InArgs)
 {
 	SInvalidationPanel::Construct(SInvalidationPanel::FArguments());
 	SetCanCache(true);
-	SetRow(nullptr, InArgs._Row);
+	SetRow(InArgs._Row);
 }
 
-void SUnicodeCharacterInfo::SetRow(TWeakPtr<SUnicodeBrowserWidget> UnicodeBrowser, TSharedPtr<FUnicodeBrowserRow> InRow)
+void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
 {
 	if(!InRow.IsValid())
 		return;
 
 	FText TagsText = FText::GetEmpty();
 	
-	if(UnicodeBrowser.IsValid())
+	if(SUnicodeBrowserWidget::GetOptions()->Preset &&SUnicodeBrowserWidget::GetOptions()->Preset->SupportsFont(*InRow->FontInfo))
 	{
-		if(UnicodeBrowser.Pin().Get()->Options->Preset && UnicodeBrowser.Pin().Get()->Options->Preset->SupportsFont(*InRow->FontInfo))
-		{
-			TagsText = FText::FromString(TEXT("Tags: ") + FString::Join(UnicodeBrowser.Pin().Get()->Options->Preset->GetCodepointTags(InRow->Codepoint), TEXT(", ")));			
-		}
+		TagsText = FText::FromString(TEXT("Tags: ") + FString::Join(SUnicodeBrowserWidget::GetOptions()->Preset->GetCodepointTags(InRow->Codepoint), TEXT(", ")));			
 	}
+	
 	
 	SetContent(
 		SNew(SVerticalBox)

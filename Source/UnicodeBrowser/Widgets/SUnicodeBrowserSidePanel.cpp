@@ -101,7 +101,7 @@ void SUnicodeBrowserSidePanel::Construct(const FArguments& InArgs)
 			CurrentCharacterView->SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X. Double-Click to copy: %s."), CharacterInfo->Codepoint, *CharacterInfo->Character)));
 
 			// update the glyph details
-			CurrentCharacterDetails->SetRow(UnicodeBrowser, CharacterInfo->AsShared());
+			CurrentCharacterDetails->SetRow(CharacterInfo->AsShared());
 		});
 
 	UnicodeBrowser.Pin().Get()->OnFontChanged.AddSPLambda(CurrentCharacterView.Get(), [CurrentCharacterView = CurrentCharacterView](FSlateFontInfo *FontInfo)

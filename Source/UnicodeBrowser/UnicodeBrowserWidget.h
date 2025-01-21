@@ -84,7 +84,10 @@ public:
 	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
 	void MarkDirty();
 	
-	TObjectPtr<UUnicodeBrowserOptions> Options;
+	static UUnicodeBrowserOptions* GetOptions()
+	{
+		return GetMutableDefault<UUnicodeBrowserOptions>();
+	};
 	
 protected:	
 	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;

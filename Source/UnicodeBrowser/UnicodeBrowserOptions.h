@@ -14,48 +14,135 @@
 /**
  * 
  */
-UCLASS(Hidden, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "Font Options")
-class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject, public FNotifyHook
+UCLASS(Config=Engine, defaultconfig, meta = (DisplayName="UnicodeBrowser"))
+class UNICODEBROWSER_API UUnicodeBrowserOptions : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
-
-	static TSharedRef<SWidget> MakePropertyEditorFont(UUnicodeBrowserOptions* Options);
-
-	UPROPERTY(EditAnywhere, DisplayName="Font")
-	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
-
-	UPROPERTY(EditAnywhere, Transient, DisplayName="Preset")
+	UPROPERTY(DisplayName="Preset")
 	TObjectPtr<UDataAsset_FontTags> Preset;
 
-	UPROPERTY()
+	UPROPERTY(Config, EditAnywhere, meta=(UIMin=1))
 	int32 NumCols = 16;
 
 	// Show Characters which can't be displayed by the font
-	UPROPERTY()
+	UPROPERTY(Config, EditAnywhere)
 	bool bShowMissing = false;
 
 	// Show Characters which have a measurement of 0x0 (primary for debug purposes)
-	UPROPERTY()
+	UPROPERTY(Config, EditAnywhere)
 	bool bShowZeroSize = false;
 
 	// Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews
-	UPROPERTY()
+	UPROPERTY(Config, EditAnywhere)
 	bool bCacheCharacterMetaOnLoad = false;
-	
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, struct FPropertyChangedEvent*);
-	FOnUbOptionsChangedDelegate OnChanged;
+	// pick unicode range based on what's available in the font
+	UPROPERTY(Config, EditAnywhere)
+	bool bAutoSetRangeOnFontChange = false;
+	
+	FSlateFontInfo& GetFontInfo()
+	{
+		FontInfo.FontObject = Font;
+		return FontInfo;
+	}
+
+	void SetFontInfo(FSlateFontInfo &FontInfoIn)
+	{
+		Font = Cast<UFont>(FontInfoIn.FontObject);
+		FontInfo = FontInfoIn;
+
+		if(Font)
+		{
+			bool bHasValidTypeface = false;
+			for(auto &Typeface : Font->CompositeFont.DefaultTypeface.Fonts)
+			{
+				if(Typeface.Name == FontTypeFace)
+				{
+					bHasValidTypeface = true;
+					break;
+				}	
+			}
+
+			// set to default if the current isn't valid
+			if(!bHasValidTypeface){
+				FontTypeFace = Font->CompositeFont.DefaultTypeface.Fonts[0].Name;
+			}
+		}
+		else
+		{
+			FontTypeFace = NAME_None;	
+		}
+		
+		
+		OnFontChanged.Broadcast();
+	}
+		
+	DECLARE_MULTICAST_DELEGATE(FOnUbOptionsChangedDelegate);
+	FOnUbOptionsChangedDelegate OnFontChanged;
 
 	virtual void PostInitProperties() override;
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-
-	// FNotifyHook Implementation
-	virtual void NotifyPostChange( const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged) override
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override
 	{
-		OnChanged.Broadcast(nullptr);
+		Super::PostEditChangeProperty(PropertyChangedEvent);
+
+		if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UUnicodeBrowserOptions, Preset))
+		{
+			// set the first font from the preset if it's bound to a specific font
+			if(Preset && Preset->Fonts.Num() > 0 && Font != Preset->Fonts[0])
+			{
+				FontInfo.FontObject = Preset->Fonts[0];
+				SetFontInfo(FontInfo); // this triggers all necessary updates
+			}
+		}
+		
+		if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UUnicodeBrowserOptions, Font))
+		{
+			FontInfo.FontObject = Font;
+			if (!FontInfo.HasValidFont())
+			{
+				FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+			}
+			SetFontInfo(FontInfo); // this triggers all necessary updates
+		}
+
+		if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UUnicodeBrowserOptions, FontTypeFace))
+		{
+			if (!FontInfo.HasValidFont())
+			{
+				FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+			}
+
+			FontInfo.TypefaceFontName = FontTypeFace;			
+			SetFontInfo(FontInfo); // this triggers all necessary updates
+		}
+		
 	}
-	// FNotifyHook Implementation End
+
+
+
+private:
+	UPROPERTY(Transient, DisplayName="Font")
+	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+
+	UPROPERTY(Transient, DisplayName="Font")
+	TObjectPtr<UFont const> Font = nullptr;
+
+	UPROPERTY(Transient, DisplayName="FontTypeface", meta=(EditCondition="Font", GetOptions=GetTypeFaces))
+	FName FontTypeFace = NAME_None;
+
+	UFUNCTION()
+	TArray<FString> GetTypeFaces() const
+	{
+		TArray<FString> Result;
+		if(Font){
+			for(auto &Entry : Font->CompositeFont.DefaultTypeface.Fonts)
+			{
+				Result.Add(Entry.Name.ToString());
+			}
+		}
+
+		return Result;
+	}
 };
