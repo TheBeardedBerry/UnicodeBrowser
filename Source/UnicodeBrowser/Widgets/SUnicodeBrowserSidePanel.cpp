@@ -121,7 +121,15 @@ TSharedRef<SExpandableArea> SUnicodeBrowserSidePanel::MakeBlockRangesSidebar()
 		{
 			if (!UnicodeBrowser.Pin().Get()->RangeWidgets.Contains(BlockRange)) return;
 			auto const RangeWidget = UnicodeBrowser.Pin().Get()->RangeWidgets.FindChecked(BlockRange);
-			UnicodeBrowser.Pin().Get()->RangeScrollbox->ScrollDescendantIntoView(RangeWidget);
+
+			// we can't use animated scroll as the layout invalidation of the RangeWidgets would be to early
+			// see PR: https://github.com/EpicGames/UnrealEngine/pull/12580
+			UnicodeBrowser.Pin().Get()->RangeScrollbox->ScrollDescendantIntoView(RangeWidget, false, EDescendantScrollDestination::TopOrLeft);
+			for(auto &[Range, RangeWidget] : UnicodeBrowser.Pin()->RangeWidgets)
+			{
+				// tell the invalidation boxes that they got moved
+				RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
+			}
 		}
 	});
 
