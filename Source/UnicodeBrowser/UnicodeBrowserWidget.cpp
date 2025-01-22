@@ -35,10 +35,18 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	CurrentFont = UUnicodeBrowserOptions::Get()->GetFontInfo();
 	
 	UUnicodeBrowserOptions::Get()->OnFontChanged.RemoveAll(this);
-	UUnicodeBrowserOptions::Get()->OnFontChanged.AddLambda([UnicodeBrowser = AsWeak()]()
+	UUnicodeBrowserOptions::Get()->OnFontChanged.AddLambda([this, UnicodeBrowser = AsWeak()]()
 	{
 		if(UnicodeBrowser.IsValid()){
-			static_cast<SUnicodeBrowserWidget*>(UnicodeBrowser.Pin().Get())->MarkDirty(static_cast<uint8>(EDirtyFlags::FONT));
+			if(	CurrentFont.FontObject != UUnicodeBrowserOptions::Get()->GetFontInfo().FontObject
+			 || CurrentFont.TypefaceFontName != UUnicodeBrowserOptions::Get()->GetFontInfo().TypefaceFontName)
+			{
+				static_cast<SUnicodeBrowserWidget*>(UnicodeBrowser.Pin().Get())->MarkDirty(static_cast<uint8>(EDirtyFlags::FONT));	
+			}
+			else
+			{
+				static_cast<SUnicodeBrowserWidget*>(UnicodeBrowser.Pin().Get())->MarkDirty(static_cast<uint8>(EDirtyFlags::FONT_STYLE));
+			}			
 		}
 	});
 
