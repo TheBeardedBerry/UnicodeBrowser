@@ -1,10 +1,9 @@
 // all rights reserved
-
-
 #include "SUnicodeBlockRangeSelector.h"
 
 #include "SlateOptMacros.h"
 #include "SSimpleButton.h"
+#include "UnicodeBrowser/UnicodeBrowserOptions.h"
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -86,7 +85,7 @@ void SUnicodeBlockRangeSelector::Construct(const FArguments& InArgs)
 	];	
 }
 
-void SUnicodeBlockRangeSelector::SetRanges(TArray<EUnicodeBlockRange> RangesToSet)
+void SUnicodeBlockRangeSelector::SetRanges(TArray<EUnicodeBlockRange> RangesToSet, bool bExclusive)
 {
 	// update all checkboxes and keep the amount of state updates as low as possible to avoid redraw
 	for (auto const &Range : UnicodeBrowser::GetUnicodeBlockRanges())
@@ -97,8 +96,28 @@ void SUnicodeBlockRangeSelector::SetRanges(TArray<EUnicodeBlockRange> RangesToSe
 			continue;
 		}
 
-		CheckBoxList->SetItemChecked(CheckboxIndices[Range.Index], RangesToSet.Contains(Range.Index) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked);
+		if(CheckboxIndices[Range.Index], RangesToSet.Contains(Range.Index))
+		{
+			CheckBoxList->SetItemChecked(CheckboxIndices[Range.Index], ECheckBoxState::Checked);	
+		}
+		else if(bExclusive)
+		{
+			CheckBoxList->SetItemChecked(CheckboxIndices[Range.Index], ECheckBoxState::Unchecked);
+		}
+		
 	}
+}
+
+void SUnicodeBlockRangeSelector::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+	if(bSelectionChanged)
+	{
+		OnRangeSelectionChanged.ExecuteIfBound();
+		bSelectionChanged = false;
+	}
+
+	SetCanTick(false);
 }
 
 
@@ -107,7 +126,9 @@ void SUnicodeBlockRangeSelector::UpdateRangeVisibility(int32 const Index)
 	auto const RangeFound = CheckboxIndices.FindKey(Index);
 	if (!RangeFound) return;
 	auto const Range = *RangeFound;
-	OnRangeStateChanged.ExecuteIfBound(Range, CheckBoxList->IsItemChecked(Index));	
+	OnRangeStateChanged.ExecuteIfBound(Range, CheckBoxList->IsItemChecked(Index));
+	bSelectionChanged = true;
+	SetCanTick(true);
 }
 
 

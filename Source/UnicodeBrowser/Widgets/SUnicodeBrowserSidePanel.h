@@ -26,7 +26,9 @@ protected:
 	TSharedPtr<STextBlock> CurrentCharacterView;
 	TSharedPtr<SUnicodeCharacterInfo> CurrentCharacterDetails;
 	TSharedPtr<SUnicodeBlockRangeSelector> RangeSelector;
-	
-	void SelectAllRangesWithCharacters() const;
+
+	/* @param Rows The set which should be evaluated when checking for entries
+	 * @param bExclusive Should all other ranges be disabled? */
+	void SelectAllRangesWithCharacters(TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> &Rows, bool bExclusive = true) const;
 	TSharedRef<SExpandableArea> MakeBlockRangesSidebar();
 };

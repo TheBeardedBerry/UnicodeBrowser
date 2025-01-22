@@ -3,17 +3,15 @@
 
 #include "ISinglePropertyView.h"
 #include "SlateOptMacros.h"
+#include "UnicodeBrowserOptions.h"
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Framework/Application/SlateApplication.h"
 
 #include "Modules/ModuleManager.h"
-#include "Sampling/GridSampler.h"
-#include "Spatial/DenseGrid2.h"
 
 #include "Widgets/SUnicodeBrowserSidePanel.h"
 #include "Widgets/SUnicodeCharacterGridEntry.h"
-#include "Widgets/SUnicodeRangeWidget.h"
 #include "Widgets/Images/SLayeredImage.h"
 
 #include "Widgets/Input/SButton.h"
@@ -21,8 +19,8 @@
 #include "Widgets/Layout/SExpandableArea.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScrollBox.h"
-#include "Widgets/Layout/SUniformGridPanel.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/Views/STileView.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -34,23 +32,16 @@ SUnicodeBrowserWidget::~SUnicodeBrowserWidget()
 
 void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 {
-	if(bInitialized)
-		return;
-
-	bInitialized = true;
-	
 	CurrentFont = UUnicodeBrowserOptions::Get()->GetFontInfo();
 	
 	UUnicodeBrowserOptions::Get()->OnFontChanged.RemoveAll(this);
 	UUnicodeBrowserOptions::Get()->OnFontChanged.AddLambda([UnicodeBrowser = AsWeak()]()
 	{
 		if(UnicodeBrowser.IsValid()){
-			static_cast<SUnicodeBrowserWidget*>(UnicodeBrowser.Pin().Get())->MarkDirty();
+			static_cast<SUnicodeBrowserWidget*>(UnicodeBrowser.Pin().Get())->MarkDirty(static_cast<uint8>(EDirtyFlags::FONT));
 		}
 	});
 
-	RangeWidgets.Reserve(UnicodeBrowser::GetUnicodeBlockRanges().Num());
-	
 	// create a dummy for the preview until the user highlights a character
 	CurrentRow = MakeShared<FUnicodeBrowserRow>(UnicodeBrowser::InvalidSubChar, EUnicodeBlockRange::Specials, &CurrentFont);
 	
@@ -67,10 +58,6 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		SearchBar->CreateMenuSection_Settings()
 	});
 
-	TSharedPtr<SLayeredImage> FilterImage = SNew(SLayeredImage)
-			.Image(FAppStyle::Get().GetBrush("DetailsView.ViewOptions"))
-			.ColorAndOpacity(FSlateColor::UseForeground());
-
 	TSharedPtr<SComboButton> SettingsButton = SNew( SComboButton )
 		.HasDownArrow(false)
 		.ContentPadding(0.0f)
@@ -82,101 +69,105 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 		]
 		.ButtonContent()
 		[
-			FilterImage.ToSharedRef()
+			SNew(SLayeredImage)
+			.Image(FAppStyle::Get().GetBrush("DetailsView.ViewOptions"))
+			.ColorAndOpacity(FSlateColor::UseForeground())
 		];
 
 
-	// generate the settings context menu
+	// generate the preset/font settings context menu
 	UToolMenu* MenuFont = UToolMenus::Get()->RegisterMenu("UnicodeBrowser.Font");
-
-	FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
-	
-	FToolMenuSection &PresetSettingsSection = MenuFont->AddSection(TEXT("PresetSettings"), INVTEXT("preset"));
 	{
-		FSinglePropertyParams SinglePropertyParams;
-		SinglePropertyParams.NamePlacement = EPropertyNamePlacement::Type::Hidden;
-		TSharedRef<SWidget> Widget = SNew(SBox)
+		FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+		
+		FToolMenuSection &PresetSettingsSection = MenuFont->AddSection(TEXT("PresetSettings"), INVTEXT("preset"));
+		{
+			FSinglePropertyParams SinglePropertyParams;
+			SinglePropertyParams.NamePlacement = EPropertyNamePlacement::Type::Hidden;
+			TSharedRef<SWidget> Widget = SNew(SBox)
+				.Padding(15, 0, 0, 0)
+				[
+					PropertyEditor.CreateSingleProperty(UUnicodeBrowserOptions::Get(), "Preset", SinglePropertyParams).ToSharedRef()
+				];
+					
+			PresetSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontInfo",  Widget, FText::GetEmpty()));
+		}
+		
+		FToolMenuSection &FontSettingsSection = MenuFont->AddSection(TEXT("FontSettings"), INVTEXT("font"));
+		{		
+			FSinglePropertyParams SinglePropertyParams;
+			SinglePropertyParams.NamePlacement = EPropertyNamePlacement::Type::Hidden;
+			TSharedRef<SWidget> Widget = SNew(SBox)
+				.Padding(15, 0, 0, 0)
+				[
+					PropertyEditor.CreateSingleProperty(UUnicodeBrowserOptions::Get(), "Font", SinglePropertyParams).ToSharedRef()
+				];
+			FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontInfo",  Widget, FText::GetEmpty()));
+		}
+
+		{		
+			FSinglePropertyParams SinglePropertyParams;
+			SinglePropertyParams.NameOverride = INVTEXT("Typeface");
+			TSharedRef<SWidget> Widget = SNew(SBox)
+				.Padding(15, 0, 0, 0)
+				[
+					PropertyEditor.CreateSingleProperty(UUnicodeBrowserOptions::Get(), "FontTypeFace", SinglePropertyParams).ToSharedRef()
+				];
+			FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontTypeFace",  Widget, FText::GetEmpty()));
+		}
+		
+		{
+			TSharedRef<SWidget> Widget = SNew(SBox)
 			.Padding(15, 0, 0, 0)
 			[
-				PropertyEditor.CreateSingleProperty(UUnicodeBrowserOptions::Get(), "Preset", SinglePropertyParams).ToSharedRef()
+				SNew(SHorizontalBox)
+				+SHorizontalBox::Slot()
+				.VAlign(VAlign_Center)
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Text(INVTEXT("font size"))
+				]
+				+SHorizontalBox::Slot()
+				.Padding(10, 0, 10, 0)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SSpinBox<float>)
+					.Delta(1)
+					.Justification(EHorizontalAlignment::HAlign_Left)
+					.MinValue(6)
+					.MinDesiredWidth(150)
+					.MaxValue(200)
+					.Value_Lambda([this](){ return CurrentFont.Size; })
+					.OnValueChanged_Lambda([this](float CurrentValue)
+					{
+						CurrentFont.Size = CurrentValue;
+						UUnicodeBrowserOptions::Get()->SetFontInfo(CurrentFont);
+						CharactersTileView->RebuildList();
+					})
+				]
 			];
 				
-		PresetSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontInfo",  Widget, FText::GetEmpty()));
-	}
-	
-	FToolMenuSection &FontSettingsSection = MenuFont->AddSection(TEXT("FontSettings"), INVTEXT("font"));
-	{		
-		FSinglePropertyParams SinglePropertyParams;
-		SinglePropertyParams.NamePlacement = EPropertyNamePlacement::Type::Hidden;
-		TSharedRef<SWidget> Widget = SNew(SBox)
-			.Padding(15, 0, 0, 0)
-			[
-				PropertyEditor.CreateSingleProperty(UUnicodeBrowserOptions::Get(), "Font", SinglePropertyParams).ToSharedRef()
-			];
-		FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontInfo",  Widget, FText::GetEmpty()));
-	}
-
-	{		
-		FSinglePropertyParams SinglePropertyParams;
-		SinglePropertyParams.NameOverride = INVTEXT("Typeface");
-		TSharedRef<SWidget> Widget = SNew(SBox)
-			.Padding(15, 0, 0, 0)
-			[
-				PropertyEditor.CreateSingleProperty(UUnicodeBrowserOptions::Get(), "FontTypeFace", SinglePropertyParams).ToSharedRef()
-			];
-		FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("FontTypeFace",  Widget, FText::GetEmpty()));
-	}
-	
-	{
-		TSharedRef<SWidget> Widget = SNew(SBox)
-		.Padding(15, 0, 0, 0)
-		[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot()
-			.VAlign(VAlign_Center)
-			.AutoWidth()
-			[
-				SNew(STextBlock)
-				.Text(INVTEXT("font size"))
-			]
-			+SHorizontalBox::Slot()
-			.Padding(10, 0, 10, 0)
-			.VAlign(VAlign_Center)
-			[
-				SNew(SSpinBox<float>)
-				.Delta(1)
-				.Justification(EHorizontalAlignment::HAlign_Left)
-				.MinValue(6)
-				.MinDesiredWidth(150)
-				.MaxValue(200)
-				.Value_Lambda([this](){ return CurrentFont.Size; })
-				.OnValueChanged_Lambda([this](float CurrentValue)
-				{
-					CurrentFont.Size = CurrentValue;
-					UUnicodeBrowserOptions::Get()->SetFontInfo(CurrentFont);
-					RebuildGrid();
-				})
-			]
-		];
+			FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserFontSize",  Widget, FText::GetEmpty(), false, false, false, INVTEXT("you can use CTRL + MouseWheel to adjust font size in the browser")));
+		}
 			
-		FontSettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserFontSize",  Widget, FText::GetEmpty(), false, false, false, INVTEXT("you can use CTRL + MouseWheel to adjust font size in the browser")));
 	}
 	
 	TSharedPtr<SComboButton> SettingsButtonFont = SNew( SComboButton )
-		.HasDownArrow(true)
-		.ContentPadding(0.0f)
-		.ForegroundColor( FSlateColor::UseForeground() )
-		.ButtonStyle( FAppStyle::Get(), "SimpleButton" )
-		.MenuContent()
-		[			
-			UToolMenus::Get()->GenerateWidget(MenuFont->GetMenuName(), MenuFont)			
-		]
-		.ButtonContent()
-		[
-			SNew(STextBlock)
-			.Text(INVTEXT("Preset / Font"))
-		];
-	
+			.HasDownArrow(true)
+			.ContentPadding(0.0f)
+			.ForegroundColor( FSlateColor::UseForeground() )
+			.ButtonStyle( FAppStyle::Get(), "SimpleButton" )
+			.MenuContent()
+			[			
+				UToolMenus::Get()->GenerateWidget(MenuFont->GetMenuName(), MenuFont)			
+			]
+			.ButtonContent()
+			[
+				SNew(STextBlock)
+				.Text(INVTEXT("Preset / Font"))
+			];
+
 	
 	ChildSlot
 	[
@@ -235,15 +226,11 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.SizeRule(SSplitter::FractionOfParent)
 				.Value(0.7)
 				[
-					SAssignNew(RangeScrollbox, SScrollBox)
-					.OnUserScrolled_Lambda([this](float ScrollOffset /* see FOnUserScrolled */)
-					{
-						for(auto &[Range, RangeWidget] : RangeWidgets)
-						{
-							// tell the invalidation boxes that they got moved
-							RangeWidget->OnScroll();
-						}
-					})
+					SAssignNew(CharactersTileView, STileView<TSharedPtr<FUnicodeBrowserRow>>)
+					.ListItemsSource(&CharacterWidgetsArray)
+					.ItemAlignment(EListItemAlignment::EvenlySize)
+					.SelectionMode(ESelectionMode::None)
+					.OnGenerateTile(this, &SUnicodeBrowserWidget::GenerateItemRow)
 				]
 				+ SSplitter::Slot()
 				.SizeRule(SSplitter::FractionOfParent)
@@ -255,9 +242,8 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	];
 
 	SetSidePanelVisibility(UUnicodeBrowserOptions::Get()->bShowSidePanel);
-	RangeScrollbox->SetScrollBarRightClickDragAllowed(true);
-
-	MarkDirty();
+	
+	MarkDirty(static_cast<uint8>(EDirtyFlags::INIT) | static_cast<uint8>(EDirtyFlags::FONT));
 }
 
 UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
@@ -273,7 +259,7 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 					UUnicodeBrowserOptions::Get()->bShowSidePanel = !UUnicodeBrowserOptions::Get()->bShowSidePanel;
 					UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 					SetSidePanelVisibility(UUnicodeBrowserOptions::Get()->bShowSidePanel);
-					RebuildGrid();
+					//RangeScrollbox->RebuildList();
 				}),
 				FCanExecuteAction(),
 				FIsActionChecked::CreateLambda([this]() { return UUnicodeBrowserOptions::Get()->bShowSidePanel; })
@@ -289,7 +275,6 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 					UUnicodeBrowserOptions::Get()->bShowMissing = !UUnicodeBrowserOptions::Get()->bShowMissing;
 					UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 					UpdateCharacters();
-					RebuildGrid();
 				}),
 				FCanExecuteAction(),
 				FIsActionChecked::CreateLambda([this]() { return UUnicodeBrowserOptions::Get()->bShowMissing; })
@@ -305,7 +290,6 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 					UUnicodeBrowserOptions::Get()->bShowZeroSize = !UUnicodeBrowserOptions::Get()->bShowZeroSize;	
 					UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 					UpdateCharacters();
-					RebuildGrid();
 				}),
 				FCanExecuteAction(),
 				FIsActionChecked::CreateLambda([this]()	{ return UUnicodeBrowserOptions::Get()->bShowZeroSize; })
@@ -336,7 +320,7 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 					UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 					if(UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
 					{
-						SidePanel->SelectAllRangesWithCharacters();
+						SidePanel->SelectAllRangesWithCharacters(RowsRaw);
 					}
 				}),
 				FCanExecuteAction(),
@@ -374,7 +358,7 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 					{
 						UUnicodeBrowserOptions::Get()->NumCols = CurrentValue;						
 						UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
-						RebuildGrid();
+						CharactersTileView->RebuildList();
 					})
 				]
 			];
@@ -394,105 +378,74 @@ void SUnicodeBrowserWidget::SetSidePanelVisibility(bool bVisible)
 }
 
 
-void SUnicodeBrowserWidget::MarkDirty()
+void SUnicodeBrowserWidget::MarkDirty(uint8 Flags)
 {
+	DirtyFlags |= Flags;
 	// schedule an update on the next tick
 	SetCanTick(true);
-	bDirty = true;
+}
+
+TSharedRef<ITableRow> SUnicodeBrowserWidget::GenerateItemRow(TSharedPtr<FUnicodeBrowserRow> CharacterData, const TSharedRef<STableViewBase>& OwnerTable)
+{
+	return SNew(STableRow<TSharedPtr<FUnicodeBrowserRow>>, OwnerTable)
+	[
+		SNew(SUnicodeCharacterGridEntry)
+			.FontInfo(CurrentFont)
+			.UnicodeCharacter(CharacterData)
+			.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, CharacterData)
+			.OnZoomFontSize(this, &SUnicodeBrowserWidget::HandleZoomFont)
+	];
 }
 
 
 void SUnicodeBrowserWidget::Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime)
 {
-	if (bDirty)
+	if (DirtyFlags && IsConstructed())  // wait for the widget to be constructed before updating
 	{
-		if (IsConstructed()) // wait for the widget to be constructed before updating
+		if(DirtyFlags & static_cast<uint8>(EDirtyFlags::FONT))
 		{
-			bDirty = false;
-			SetCanTick(false);
-			Update();
-		}
-	}
-	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
-}
+			CurrentFont = UUnicodeBrowserOptions::Get()->GetFontInfo();
 
-
-void SUnicodeBrowserWidget::Update(bool bForceRepopulateCharacters)
-{
-	bool const bIsInitialized = !Rows.IsEmpty();
-
-	// did the actual font change?
-	bool const bUpdateCharacters = !bIsInitialized || bForceRepopulateCharacters || UUnicodeBrowserOptions::Get()->GetFontInfo().FontObject != CurrentFont.FontObject || UUnicodeBrowserOptions::Get()->GetFontInfo().TypefaceFontName != CurrentFont.TypefaceFontName;
-	// did only style parameters of the FontInfo change?!
-	bool const bUpdateCharacterPreviews = bUpdateCharacters || UUnicodeBrowserOptions::Get()->GetFontInfo() != CurrentFont; 
-	CurrentFont = UUnicodeBrowserOptions::Get()->GetFontInfo();
-	
-	
-	if(bUpdateCharacters)
-	{
-		// rebuild the character list
-		PopulateSupportedCharacters();
-
-		if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid() && RangeScrollbox.IsValid()){
-			RangeScrollbox->ClearChildren();
-			RangeWidgets.Empty();
+			if(DirtyFlags & static_cast<uint8>(EDirtyFlags::FONT_FACE))
+			{
+				// rebuild the character list
+				PopulateSupportedCharacters();
+				if(UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
+				{
+					SidePanel->SelectAllRangesWithCharacters(RowsRaw);
+				}
 			
-			// create the range widgets which are represented in this font
-			for (auto const& Range : UnicodeBrowser::GetUnicodeBlockRanges())
-			{
-				// skip ranges which don't have any characters, for now even when showMissing is active!
-				if(!Rows.Contains(Range.Index) || Rows.FindChecked(Range.Index).IsEmpty())
-					continue;
-				
-				RangeWidgets.Add(Range.Index,
-					SNew(SUnicodeRangeWidget)
-						.Range(Range)
-						.Visibility(SidePanel->RangeSelector->IsRangeChecked(Range.Index) ? EVisibility::Visible : EVisibility::Collapsed)
-						.OnZoomFontSize(this, &SUnicodeBrowserWidget::HandleZoomFont)
-						.OnZoomColumnCount(this, &SUnicodeBrowserWidget::HandleZoomColumns)
-					);
+				OnFontChanged.Broadcast(&CurrentFont);
+			
+				DirtyFlags &= ~static_cast<uint8>(EDirtyFlags::FONT_FACE);
+			}
 
-				RangeScrollbox->AddSlot()
-					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Top)
-					[ RangeWidgets.FindChecked(Range.Index).ToSharedRef() ];
-			}			
+			if(DirtyFlags & static_cast<uint8>(EDirtyFlags::FONT_STYLE))
+			{
+				CharactersTileView->RebuildList();
+				DirtyFlags &= ~static_cast<uint8>(EDirtyFlags::FONT_STYLE);
+			}		
 		}
 
-		if(UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
-		{
-			SidePanel->SelectAllRangesWithCharacters();
-		}
-		
-		OnFontChanged.Broadcast(&CurrentFont);
-	}
-	
-	if(bUpdateCharacterPreviews){
-		// update each entry with the new font info
-		for(auto &[Range, RangeWidget] : RangeWidgets)
-		{
-			for(auto &CharacterGridEntry : RangeWidget->Characters)
+		if(DirtyFlags & static_cast<uint8>(EDirtyFlags::INIT)){
+			if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid())
 			{
-				CharacterGridEntry->SetFontInfo(CurrentFont);			
+				// only use a default preset if this option is disabled, otherwise it causes trouble when reopening the Tab while a valid font is still set in UUnicodeBrowserOptions 
+				if(!UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
+				{
+					// default preset		
+					SidePanel->RangeSelector->SetRanges(UnicodeBrowser::SymbolRanges);
+				}
+
+				DirtyFlags &= ~static_cast<uint8>(EDirtyFlags::INIT);
 			}
 		}
 	}
 
-	
-	if(!bIsInitialized){
-		if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid())
-		{
-			// only use a default preset if this option is disabled, otherwise it causes trouble when reopening the Tab while a valid font is still set in UUnicodeBrowserOptions 
-			if(!UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
-			{
-				// default preset		
-				SidePanel->RangeSelector->SetRanges(UnicodeBrowser::SymbolRanges);
-			}	
-		}
-	}
-	
-	RebuildGrid();
+	SetCanTick(DirtyFlags);
+	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 }
+
 
 
 void SUnicodeBrowserWidget::PopulateSupportedCharacters()
@@ -525,10 +478,15 @@ void SUnicodeBrowserWidget::UpdateCharacters()
 {
 	Rows.Empty();
 	Rows.Reserve(RowsRaw.Num());
-	
+
 	for(const auto &[Range, RawRangeRows] : RowsRaw)
 	{
-		TArray<TSharedPtr<FUnicodeBrowserRow>> RowsFiltered = RawRangeRows.FilterByPredicate([](TSharedPtr<FUnicodeBrowserRow> const &RawRow)
+		// we can skip the whole range if it's not selected
+		if(!SidePanel->RangeSelector->IsRangeChecked(Range))
+			continue;	
+		
+		TArray<TSharedPtr<FUnicodeBrowserRow>> RowsFiltered;
+		RowsFiltered = RawRangeRows.FilterByPredicate([](TSharedPtr<FUnicodeBrowserRow> const &RawRow)
 		{
 			if(RawRow->bFilteredByTag)
 				return false;
@@ -546,26 +504,30 @@ void SUnicodeBrowserWidget::UpdateCharacters()
 		{
 			Rows.Add(Range, RowsFiltered);
 		}
-	}	
+	}
+
+	UpdateCharactersArray();
 }
 
-
-void SUnicodeBrowserWidget::RebuildGrid()
+void SUnicodeBrowserWidget::UpdateCharactersArray()
 {
-	// rebuild the grid
-	for (auto & [Range, RangeWidget] : RangeWidgets)
+	int CharacterCount = 0;
+	for(const auto &[Range, RangeRows] : Rows)
 	{
-		RebuildGridRange(RangeWidget);
+		CharacterCount += RangeRows.Num();
+	}
+	
+	CharacterWidgetsArray.Empty();	
+	CharacterWidgetsArray.Reserve(CharacterCount);
+
+	for(const auto &[Range, FilteredRangeRows] : Rows){
+		for(auto &Character : FilteredRangeRows)
+		{
+			CharacterWidgetsArray.Add(Character);
+		}
 	}
 }
 
-void SUnicodeBrowserWidget::InvalidateGrid()
-{
-	for (auto & [Range, RangeWidget] : RangeWidgets)
-	{
-		RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
-	}
-}
 
 void SUnicodeBrowserWidget::FilterByString(FString Needle)
 {
@@ -593,9 +555,10 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 	if(bFilterTags){
 		Whitelist = UUnicodeBrowserOptions::Get()->Preset->GetCharactersByNeedle(Needle);
 	}
-	
+
 	for(auto &[Range, RawRangeRows] : RowsRaw)
 	{
+		bool bRangeHasMatch = false;
 		for(TSharedPtr<FUnicodeBrowserRow> &RowRaw : RawRangeRows)
 		{
 			bool bToggleRowState = Needle.IsEmpty() && RowRaw->bFilteredByTag;
@@ -619,60 +582,23 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 			{
 				RowRaw->bFilteredByTag = !RowRaw->bFilteredByTag;
 				bNeedUpdate = true;
+				bRangeHasMatch = true;
 			}
 		}
+
+		// ensure that the necessary ranges are selected before UpdateCharacters() is updating the filtered list
+		if(bRangeHasMatch && UUnicodeBrowserOptions::Get()->bSearch_AutoSetRange){
+			if(!SidePanel->RangeSelector->IsRangeChecked(Range))
+			{
+				SidePanel->RangeSelector->SetRanges({ Range }, false);
+			}
+		}			
 	}
 
 	if(bNeedUpdate){
 		UpdateCharacters();
-		RebuildGrid();
-
-		if(UUnicodeBrowserOptions::Get()->bSearch_AutoSetRange)
-		{
-			SidePanel->SelectAllRangesWithCharacters();
-		}
+		CharactersTileView->RebuildList();
 	}
-}
-
-
-void SUnicodeBrowserWidget::RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget)
-{
-	if(!RangeWidget.IsValid()) return;
-	
-	TSharedRef<SUniformGridPanel> GridPanel = RangeWidget->GetGridPanel();
-	RangeWidget->Characters.Empty();
-	GridPanel->ClearChildren();
-
-	if (!Rows.Contains(RangeWidget->GetRange().Index)) return;
-	
-	auto const NumCols = UUnicodeBrowserOptions::Get()->NumCols;
-	GridPanel->SetMinDesiredSlotHeight(CurrentFont.Size * 2);
-	GridPanel->SetMinDesiredSlotWidth(CurrentFont.Size * 2);
-
-	auto RowEntries = Rows.FindChecked(RangeWidget->GetRange().Index);
-	// pad the grid with empty slots so that the grid is always filled with a uniform number of columns
-	auto const NumEntries = FMath::Max(RowEntries.Num(), NumCols);
-	for (int32 i = 0; i < NumEntries; ++i)
-	{
-		auto Slot = GridPanel->AddSlot(i % NumCols, i / NumCols);
-		// empty slot
-		if (!RowEntries.IsValidIndex(i)) continue;
-
-		auto const Row = RowEntries[i];
-		TSharedPtr<SUnicodeCharacterGridEntry> GridCell = SNew(SUnicodeCharacterGridEntry)
-				.FontInfo(CurrentFont)
-				.UnicodeCharacter(Row)
-				.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, Row);
-
-		RangeWidget->Characters.Add(GridCell);
-		
-		Slot
-		[
-			GridCell.ToSharedRef()
-		];
-	}
-
-	RangeWidget->Invalidate(EInvalidateWidgetReason::Layout);
 }
 
 
@@ -690,7 +616,7 @@ void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 {	
 	CurrentFont.Size = FMath::Max(1.0f, CurrentFont.Size + Offset);
 	UUnicodeBrowserOptions::Get()->SetFontInfo(CurrentFont);
-	InvalidateGrid();
+	CharactersTileView->RebuildList();
 }
 
 
@@ -699,7 +625,7 @@ void SUnicodeBrowserWidget::HandleZoomColumns(float Offset)
 	// we want inverted behavior for columns
 	UUnicodeBrowserOptions::Get()->NumCols = FMath::Max(1, FMath::RoundToInt(UUnicodeBrowserOptions::Get()->NumCols - Offset));
 	
-	RebuildGrid();
+	CharactersTileView->RebuildList();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

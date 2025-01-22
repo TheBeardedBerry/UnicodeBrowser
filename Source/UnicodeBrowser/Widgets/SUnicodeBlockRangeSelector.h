@@ -22,18 +22,25 @@ public:
 
 	DECLARE_DELEGATE_TwoParams(FRangeStateChanged, EUnicodeBlockRange, bool)
 	FRangeStateChanged OnRangeStateChanged;
+
+	DECLARE_DELEGATE(FRangeSelectionChanged)
+	FRangeSelectionChanged OnRangeSelectionChanged;
 	
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
-	
-	void SetRanges(TArray<EUnicodeBlockRange> RangesToSet);
+
+	/*@param bExclusive Should all other ranges be disabled? */	
+	void SetRanges(TArray<EUnicodeBlockRange> RangesToSet, bool bExclusive = true);
 	
 	bool IsRangeChecked(EUnicodeBlockRange Range) const
 	{
 		return CheckboxIndices.Contains(Range) ? CheckBoxList->IsItemChecked(CheckboxIndices.FindChecked(Range)) : false;
 	}
+
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	
-protected:	
+protected:
+	bool bSelectionChanged = false;
 	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index
 
 	TWeakPtr<class SUnicodeBrowserWidget> UnicodeBrowser;

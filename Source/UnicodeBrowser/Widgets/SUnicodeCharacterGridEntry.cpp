@@ -10,9 +10,14 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 {
 	UnicodeCharacter = InArgs._UnicodeCharacter.Get();
 
+	OnZoomFontSize = InArgs._OnZoomFontSize;
+	OnZoomColumnCount = InArgs._OnZoomColumnCount;
+	
 	SBorder::Construct(SBorder::FArguments()
 		.BorderImage(nullptr)
 		.OnMouseMove(InArgs._OnMouseMove)
+		.Padding(5)
+		.VAlign(VAlign_Center)
 	);		
 	
 	if(!UnicodeCharacter.IsValid())
@@ -49,6 +54,28 @@ void SUnicodeCharacterGridEntry::OnMouseLeave(const FPointerEvent& MouseEvent)
 {
 	SBorder::OnMouseLeave(MouseEvent);
 	SetColorAndOpacity(FLinearColor::White);
+}
+
+FReply SUnicodeCharacterGridEntry::OnMouseWheel(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	if(MouseEvent.GetWheelDelta() && MouseEvent.IsControlDown())
+	{
+		// CTRL + !Shift => Zoom Font
+		if(!MouseEvent.IsShiftDown() && OnZoomFontSize.IsBound())
+		{
+			OnZoomFontSize.Execute(MouseEvent.GetWheelDelta());			
+			return FReply::Handled();
+		}
+
+		// CTRL + Shift => Zoom Columns
+		if(MouseEvent.IsShiftDown() && OnZoomColumnCount.IsBound())
+		{
+			OnZoomColumnCount.Execute(MouseEvent.GetWheelDelta());			
+			return FReply::Handled();
+		}
+	}
+
+	return FReply::Unhandled();
 }
 
 FReply SUnicodeCharacterGridEntry::OnMouseButtonDoubleClick(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)

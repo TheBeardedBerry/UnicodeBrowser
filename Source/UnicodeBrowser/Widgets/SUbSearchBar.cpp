@@ -34,7 +34,7 @@ UToolMenu* SUbSearchBar::CreateMenuSection_Settings()
 			FIsActionChecked::CreateLambda([this]() { return UUnicodeBrowserOptions::Get()->bSearch_AutoSetRange; })
 		);
 			
-		SettingsMenu.AddMenuEntry("AutoSetRange", INVTEXT("update ranges"), INVTEXT(""), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+		SettingsMenu.AddMenuEntry("AutoSetRange", INVTEXT("update ranges"), INVTEXT("should the range selection adjust to the items with matches?\ngenerally this should be enabled,\nunless you want to search for glyphs within a specific range"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
 	}
 
 	{
@@ -49,7 +49,7 @@ UToolMenu* SUbSearchBar::CreateMenuSection_Settings()
 			FIsActionChecked::CreateLambda([this]()	{ return UUnicodeBrowserOptions::Get()->bSearch_CaseSensitive; })
 		);
 			
-		SettingsMenu.AddMenuEntry("CaseSensitive", INVTEXT("case sensitive"), INVTEXT("enabled case sensitive search for letters\nthis setting doesn't affect Tag search"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
+		SettingsMenu.AddMenuEntry("CaseSensitive", INVTEXT("case sensitive"), INVTEXT("enabled case sensitive search for letters\nthis setting does only affect single character matching"), FSlateIcon(), Action, EUserInterfaceActionType::ToggleButton);
 	}
 
 	return Menu;

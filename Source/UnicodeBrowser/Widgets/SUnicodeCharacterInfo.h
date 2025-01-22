@@ -7,6 +7,7 @@
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/SInvalidationPanel.h"
 
 /**
  * 

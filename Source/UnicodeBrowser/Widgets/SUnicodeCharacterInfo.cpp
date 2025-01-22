@@ -1,6 +1,7 @@
 #include "SUnicodeCharacterInfo.h"
 
 #include "SlateOptMacros.h"
+#include "UnicodeBrowser/UnicodeBrowserOptions.h"
 
 #include "UnicodeBrowser/UnicodeBrowserRow.h"
 
@@ -24,7 +25,12 @@ void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
 	{
 		TagsText = FText::FromString(TEXT("Tags: ") + FString::Join(UUnicodeBrowserOptions::Get()->Preset->GetCodepointTags(InRow->Codepoint), TEXT(", ")));			
 	}
-	
+
+	FString BlockRangeName = "";
+	if(FUnicodeBlockRange const *Range = UnicodeBrowser::GetUnicodeBlockRanges().FindByPredicate([Needle = InRow->BlockRange.Get(EUnicodeBlockRange::ControlCharacter)](FUnicodeBlockRange const &Range){ return Range.Index == Needle; }))
+	{
+		BlockRangeName = *Range->DisplayName.ToString();	
+	}
 	
 	SetContent(
 		SNew(SVerticalBox)
@@ -63,6 +69,12 @@ void SUnicodeCharacterInfo::SetRow(TSharedPtr<FUnicodeBrowserRow> InRow)
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(FString::Printf(TEXT("Scaling Factor: %3.3f"), InRow->GetScaling())))
+			]
+			// range
+			+SVerticalBox::Slot()
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(FString::Printf(TEXT("Unicode Range: %s"), *BlockRangeName)))
 			]
 			// tags
 			+SVerticalBox::Slot()

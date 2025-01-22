@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UnicodeBrowserOptions.h"
 #include "UnicodeBrowserRow.h"
 
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/SUbSearchBar.h"
-#include "Widgets/SUnicodeRangeWidget.h"
+#include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/Views/SListView.h"
+#include "Widgets/Views/STileView.h"
 
 class SExpandableArea;
 class UFont;
@@ -61,6 +61,15 @@ namespace UnicodeBrowser
 class SUnicodeBrowserWidget : public SCompoundWidget
 {
 	friend class SUnicodeBrowserSidePanel;
+
+	enum class EDirtyFlags : uint8
+	{
+		YOLO = 0,
+		INIT = 1 << 0,
+		FONT_FACE = 1 << 1, // never use this to call MarkDirt, use FONT which also invalidates the style
+		FONT_STYLE = 1 << 2,
+		FONT = FONT_FACE | FONT_STYLE
+	};
 	
 public:
 	SLATE_BEGIN_ARGS(SUnicodeBrowserWidget) {}
@@ -82,30 +91,28 @@ public:
 	virtual ~SUnicodeBrowserWidget() override;
 	void Construct(FArguments const& InArgs);
 	virtual void Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime) override;
-	void MarkDirty();
+	void MarkDirty(uint8 Flags);
 	
-	
+	TSharedRef<ITableRow> GenerateItemRow(TSharedPtr<FUnicodeBrowserRow> CharacterData, const TSharedRef<STableViewBase>& OwnerTable);
+
 protected:	
-	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
-	TSharedPtr<SScrollBox> RangeScrollbox;
+	TArray<TSharedPtr<FUnicodeBrowserRow>> CharacterWidgetsArray;
+	TSharedPtr<STileView<TSharedPtr<FUnicodeBrowserRow>>> CharactersTileView;
 	TSharedPtr<SUbSearchBar> SearchBar;
 	TSharedPtr<class SUnicodeBrowserSidePanel> SidePanel;
 	
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
 	FSlateFontInfo CurrentFont = DefaultFont;
 
-	bool bInitialized = false;
-	bool bDirty = true;
 	
 protected:
 	void Update(bool bForceRepopulateCharacters = false);
 	void PopulateSupportedCharacters();
 	void UpdateCharacters();
-	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget);	
-	void RebuildGrid();
-	void InvalidateGrid();
+	void UpdateCharactersArray();
 
 	void FilterByString(FString Needle);
+
 	
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 	void HandleZoomFont(float Offset);
@@ -114,6 +121,7 @@ protected:
 private:
 	UToolMenu* CreateMenuSection_Settings();
 	void SetSidePanelVisibility(bool bVisible = true);
+	uint8 DirtyFlags;
 };
 
 

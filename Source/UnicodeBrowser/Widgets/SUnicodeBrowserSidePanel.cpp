@@ -110,27 +110,28 @@ TSharedRef<SExpandableArea> SUnicodeBrowserSidePanel::MakeBlockRangesSidebar()
 
 	RangeSelector->OnRangeClicked.BindSPLambda(this, [this](EUnicodeBlockRange BlockRange)
 	{
-		if (UnicodeBrowser.IsValid() && UnicodeBrowser.Pin().Get()->RangeScrollbox.IsValid())
+		if (UnicodeBrowser.IsValid() && UnicodeBrowser.Pin().Get()->CharactersTileView.IsValid())
 		{
-			if (!UnicodeBrowser.Pin().Get()->RangeWidgets.Contains(BlockRange)) return;
-			auto const RangeWidget = UnicodeBrowser.Pin().Get()->RangeWidgets.FindChecked(BlockRange);
-
-			// we can't use animated scroll as the layout invalidation of the RangeWidgets would be to early
-			// see PR: https://github.com/EpicGames/UnrealEngine/pull/12580
-			UnicodeBrowser.Pin().Get()->RangeScrollbox->ScrollDescendantIntoView(RangeWidget, false, EDescendantScrollDestination::TopOrLeft);
-			for(auto &[Range, RangeWidget] : UnicodeBrowser.Pin()->RangeWidgets)
+			if(TArray<TSharedPtr<FUnicodeBrowserRow>> *RangeCharacters = UnicodeBrowser.Pin().Get()->Rows.Find(BlockRange))
 			{
-				// tell the invalidation boxes that they got moved
-				RangeWidget->OnScroll();
+				if(RangeCharacters->Num() > 0)
+				{
+					// we scroll to the first character within that range
+					TSharedPtr<FUnicodeBrowserRow> &Character = (*RangeCharacters)[0];
+
+					// we can't use animated scroll as the layout invalidation of the RangeWidgets would be to early
+					// see PR: https://github.com/EpicGames/UnrealEngine/pull/12580
+					UnicodeBrowser.Pin().Get()->CharactersTileView->RequestScrollIntoView(Character);
+				}
 			}
 		}
 	});
 
-	RangeSelector->OnRangeStateChanged.BindSPLambda(this, [this](EUnicodeBlockRange BlockRange, bool State)
+	// this method gets called a tick late, so that a preset can modify multiple states and the character list will only be updated once
+	RangeSelector->OnRangeSelectionChanged.BindSPLambda(this, [this]()
 	{		
-		if (auto const RangeWidget = UnicodeBrowser.Pin().Get()->RangeWidgets.Find(BlockRange)){
-			RangeWidget->Get()->SetVisibility(State ? EVisibility::Visible : EVisibility::Collapsed);
-		}
+		UnicodeBrowser.Pin()->UpdateCharacters();
+		UnicodeBrowser.Pin()->CharactersTileView->RebuildList();
 	});
 	
 	return SNew(SExpandableArea)
@@ -156,7 +157,10 @@ TSharedRef<SExpandableArea> SUnicodeBrowserSidePanel::MakeBlockRangesSidebar()
 				.HAlign(HAlign_Center)
 				.VAlign(VAlign_Center)
 				.OnClicked_Lambda([this](){
-					SelectAllRangesWithCharacters();
+					if(UnicodeBrowser.IsValid())
+					{
+						SelectAllRangesWithCharacters(UnicodeBrowser.Pin()->RowsRaw);
+					}
 					return FReply::Handled();
 				})
 			]
@@ -187,14 +191,14 @@ TSharedRef<SExpandableArea> SUnicodeBrowserSidePanel::MakeBlockRangesSidebar()
 }
 
 
-void SUnicodeBrowserSidePanel::SelectAllRangesWithCharacters() const
+void SUnicodeBrowserSidePanel::SelectAllRangesWithCharacters(TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> &Rows, bool bExclusive) const
 {
 	TArray<EUnicodeBlockRange> Ranges;
-	for (auto const& [Range, Characters] : UnicodeBrowser.Pin().Get()->Rows)
+	for (auto const& [Range, Characters] : Rows)
 	{		
 		if(!Characters.IsEmpty()) Ranges.Add(Range);
 	}
-	RangeSelector->SetRanges(Ranges);
+	RangeSelector->SetRanges(Ranges, bExclusive);
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
