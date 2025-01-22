@@ -409,6 +409,20 @@ void SUnicodeBrowserWidget::Tick(FGeometry const& AllottedGeometry, double const
 			if(DirtyFlags & static_cast<uint8>(EDirtyFlags::FONT_FACE))
 			{
 				// rebuild the character list
+
+
+				// ensure all ranges are checked when auto set ranges is enabled
+				if(UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
+				{
+					for(FUnicodeBlockRange const &Range : UnicodeBrowser::GetUnicodeBlockRanges())
+					{
+						if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid())
+						{
+							SidePanel->RangeSelector->SetRanges({ Range.Index }, false);
+						}
+					}
+				}
+				
 				PopulateSupportedCharacters();
 				if(UUnicodeBrowserOptions::Get()->bAutoSetRangeOnFontChange)
 				{
