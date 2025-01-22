@@ -17,8 +17,8 @@ public:
 	UPROPERTY(DisplayName="Preset")
 	TObjectPtr<UDataAsset_FontTags> Preset;
 
-	UPROPERTY(Config, EditAnywhere, meta=(UIMin=1))
-	int32 NumCols = 16;
+	UPROPERTY(Config, EditAnywhere, meta=(UIMin=0))
+	int32 GridCellPadding = 5;
 
 	// allow to toggle the right side panel on/off
 	UPROPERTY(Config, EditAnywhere)

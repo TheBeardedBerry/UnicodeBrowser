@@ -36,7 +36,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	
 	UUnicodeBrowserOptions::Get()->OnFontChanged.RemoveAll(this);
 	UUnicodeBrowserOptions::Get()->OnFontChanged.AddLambda([this, UnicodeBrowser = AsWeak()]()
-	{
+	{	
 		if(UnicodeBrowser.IsValid()){
 			if(	CurrentFont.FontObject != UUnicodeBrowserOptions::Get()->GetFontInfo().FontObject
 			 || CurrentFont.TypefaceFontName != UUnicodeBrowserOptions::Get()->GetFontInfo().TypefaceFontName)
@@ -250,8 +250,9 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 	];
 
 	SetSidePanelVisibility(UUnicodeBrowserOptions::Get()->bShowSidePanel);
-	
-	MarkDirty(static_cast<uint8>(EDirtyFlags::INIT) | static_cast<uint8>(EDirtyFlags::FONT));
+
+	MarkDirty(static_cast<uint8>(EDirtyFlags::INIT));
+	MarkDirty(static_cast<uint8>(EDirtyFlags::FONT));
 }
 
 UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
@@ -351,7 +352,7 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 				.AutoWidth()
 				[
 					SNew(STextBlock)
-					.Text(INVTEXT("columns"))
+					.Text(INVTEXT("cell padding"))
 				]
 				+SHorizontalBox::Slot()
 				.Padding(10, 0, 10, 0)
@@ -359,19 +360,20 @@ UToolMenu* SUnicodeBrowserWidget::CreateMenuSection_Settings()
 				[
 					SNew(SSpinBox<int32>)
 					.Delta(1)
-					.MinValue(1)
-					.MaxValue(32)
-					.Value_Lambda([this]()  { return UUnicodeBrowserOptions::Get()->NumCols; })
+					.MinValue(0)
+					.MaxValue(25)
+					.Value_Lambda([this]()  { return UUnicodeBrowserOptions::Get()->GridCellPadding; })
 					.OnValueChanged_Lambda([this](int32 CurrentValue)
 					{
-						UUnicodeBrowserOptions::Get()->NumCols = CurrentValue;						
+						UUnicodeBrowserOptions::Get()->GridCellPadding = CurrentValue;
 						UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
 						CharactersTileView->RebuildList();
+						MarkDirty(static_cast<uint8>(EDirtyFlags::FONT_STYLE));				
 					})
 				]
 			];
 			
-			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserNumColumns",  Widget, FText::GetEmpty(), false, false, false, INVTEXT("you can use CTRL + Shift + MouseWheel to adjust column count in the browser")));
+			DisplaySettingsSection.AddEntry(FToolMenuEntry::InitWidget("BrowserGridCellPadding",  Widget, FText::GetEmpty(), false, false, false, INVTEXT("you can use CTRL + Shift + MouseWheel to adjust cell padding in the browser")));
 		}
 		
 		
@@ -402,6 +404,7 @@ TSharedRef<ITableRow> SUnicodeBrowserWidget::GenerateItemRow(TSharedPtr<FUnicode
 			.UnicodeCharacter(CharacterData)
 			.OnMouseMove(this, &SUnicodeBrowserWidget::OnCharacterMouseMove, CharacterData)
 			.OnZoomFontSize(this, &SUnicodeBrowserWidget::HandleZoomFont)
+			.OnZoomCellPadding(this, &SUnicodeBrowserWidget::HandleZoomPadding)
 	];
 }
 
@@ -410,6 +413,27 @@ void SUnicodeBrowserWidget::Tick(FGeometry const& AllottedGeometry, double const
 {
 	if (DirtyFlags && IsConstructed())  // wait for the widget to be constructed before updating
 	{
+		// grid size MUST be evaluated before the font, because FONT flag may set it dirty for the next tick
+		if(DirtyFlags & static_cast<uint8>(EDirtyFlags::TILEVIEW_GRID_SIZE))
+		{
+			double DesiredSize = 0;
+			for(int ChildIdx = 0; ChildIdx < CharactersTileView->GetNumGeneratedChildren(); ChildIdx++){		
+				if(!CharactersTileView->GetGeneratedChildAt(ChildIdx).Get()->NeedsPrepass())
+				{
+					FVector2D ChildDesiredSize = CharactersTileView->GetGeneratedChildAt(ChildIdx).Get()->GetDesiredSize();
+					DesiredSize = FMath::Max(DesiredSize, FMath::Max(ChildDesiredSize.X, ChildDesiredSize.X));
+				}
+			}
+
+			if(DesiredSize > 0){
+				CharactersTileView->SetItemWidth(FMath::Min(DesiredSize, CharactersTileView->GetCachedGeometry().Size.X / 2.0));
+				CharactersTileView->SetItemHeight(FMath::Min(DesiredSize, CharactersTileView->GetCachedGeometry().Size.Y / 2.0));
+				CharactersTileView->RebuildList();
+			}
+			
+			DirtyFlags &= ~static_cast<uint8>(EDirtyFlags::TILEVIEW_GRID_SIZE);
+		}
+		
 		if(DirtyFlags & static_cast<uint8>(EDirtyFlags::FONT))
 		{
 			CurrentFont = UUnicodeBrowserOptions::Get()->GetFontInfo();
@@ -444,11 +468,12 @@ void SUnicodeBrowserWidget::Tick(FGeometry const& AllottedGeometry, double const
 
 			if(DirtyFlags & static_cast<uint8>(EDirtyFlags::FONT_STYLE))
 			{
-				CharactersTileView->RebuildList();
+				CharactersTileView->RebuildList();			
+				MarkDirty(static_cast<uint8>(EDirtyFlags::TILEVIEW_GRID_SIZE)); // set grid size dirty
 				DirtyFlags &= ~static_cast<uint8>(EDirtyFlags::FONT_STYLE);
 			}		
 		}
-
+		
 		if(DirtyFlags & static_cast<uint8>(EDirtyFlags::INIT)){
 			if(SidePanel.IsValid() && SidePanel->RangeSelector.IsValid())
 			{
@@ -642,12 +667,14 @@ void SUnicodeBrowserWidget::HandleZoomFont(float Offset)
 }
 
 
-void SUnicodeBrowserWidget::HandleZoomColumns(float Offset)
+void SUnicodeBrowserWidget::HandleZoomPadding(float Offset)
 {
-	// we want inverted behavior for columns
-	UUnicodeBrowserOptions::Get()->NumCols = FMath::Max(1, FMath::RoundToInt(UUnicodeBrowserOptions::Get()->NumCols - Offset));
-	
+	// we want inverted behavior for cellpadding
+	UUnicodeBrowserOptions::Get()->GridCellPadding = FMath::Max(0, FMath::RoundToInt(UUnicodeBrowserOptions::Get()->GridCellPadding - Offset));
+	UUnicodeBrowserOptions::Get()->TryUpdateDefaultConfigFile();
+
 	CharactersTileView->RebuildList();
+	MarkDirty(static_cast<uint8>(EDirtyFlags::FONT_STYLE));
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

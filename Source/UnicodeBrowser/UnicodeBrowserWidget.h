@@ -9,7 +9,6 @@
 
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/SUbSearchBar.h"
-#include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Views/STileView.h"
 
@@ -68,7 +67,8 @@ class SUnicodeBrowserWidget : public SCompoundWidget
 		INIT = 1 << 0,
 		FONT_FACE = 1 << 1, // never use this to call MarkDirt, use FONT which also invalidates the style
 		FONT_STYLE = 1 << 2,
-		FONT = FONT_FACE | FONT_STYLE
+		FONT = FONT_FACE | FONT_STYLE,
+		TILEVIEW_GRID_SIZE = 1 << 3
 	};
 	
 public:
@@ -83,9 +83,8 @@ public:
 
 	FSlateFontInfo DefaultFont = FCoreStyle::GetDefaultFontStyle("Regular", 18);
 	
-	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> RowsRaw;
-
-	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> RowsRaw;	// a raw list of all characters for the current font
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;		// a filtered view of the raw data, those are the characters that a
 
 public:
 	virtual ~SUnicodeBrowserWidget() override;
@@ -103,10 +102,8 @@ protected:
 	
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
 	FSlateFontInfo CurrentFont = DefaultFont;
-
 	
 protected:
-	void Update(bool bForceRepopulateCharacters = false);
 	void PopulateSupportedCharacters();
 	void UpdateCharacters();
 	void UpdateCharactersArray();
@@ -116,7 +113,7 @@ protected:
 	
 	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
 	void HandleZoomFont(float Offset);
-	void HandleZoomColumns(float Offset);
+	void HandleZoomPadding(float Offset);
 
 private:
 	UToolMenu* CreateMenuSection_Settings();

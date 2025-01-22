@@ -3,6 +3,7 @@
 
 #include "SlateOptMacros.h"
 #include "HAL/PlatformApplicationMisc.h"
+#include "UnicodeBrowser/UnicodeBrowserOptions.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -11,14 +12,13 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 	UnicodeCharacter = InArgs._UnicodeCharacter.Get();
 
 	OnZoomFontSize = InArgs._OnZoomFontSize;
-	OnZoomColumnCount = InArgs._OnZoomColumnCount;
+	OnZoomCellPadding = InArgs._OnZoomCellPadding;
 	
 	SBorder::Construct(SBorder::FArguments()
 		.BorderImage(nullptr)
 		.OnMouseMove(InArgs._OnMouseMove)
-		.Padding(5)
-		.VAlign(VAlign_Center)
-	);		
+		.VAlign(VAlign_Center)		
+	);
 	
 	if(!UnicodeCharacter.IsValid())
 	{
@@ -33,6 +33,7 @@ void SUnicodeCharacterGridEntry::Construct(const FArguments& InArgs)
 			.Justification(ETextJustify::Center)
 			.Text(FText::FromString(*UnicodeCharacter->Character))
 			.Visibility(EVisibility::HitTestInvisible)
+			.Margin(UUnicodeBrowserOptions::Get()->GridCellPadding)
 		];
 	
 }
@@ -68,9 +69,9 @@ FReply SUnicodeCharacterGridEntry::OnMouseWheel(const FGeometry& MyGeometry, con
 		}
 
 		// CTRL + Shift => Zoom Columns
-		if(MouseEvent.IsShiftDown() && OnZoomColumnCount.IsBound())
+		if(MouseEvent.IsShiftDown() && OnZoomCellPadding.IsBound())
 		{
-			OnZoomColumnCount.Execute(MouseEvent.GetWheelDelta());			
+			OnZoomCellPadding.Execute(MouseEvent.GetWheelDelta());			
 			return FReply::Handled();
 		}
 	}

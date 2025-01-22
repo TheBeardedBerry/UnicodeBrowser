@@ -17,7 +17,7 @@ public:
 		SLATE_EVENT(FPointerEventHandler, OnMouseMove)
 		SLATE_EVENT(FPointerEventHandler, OnMouseDoubleClick)	
 		SLATE_EVENT(FZoomEvent, OnZoomFontSize)
-		SLATE_EVENT(FZoomEvent, OnZoomColumnCount)
+		SLATE_EVENT(FZoomEvent, OnZoomCellPadding)
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
@@ -36,5 +36,5 @@ private:
 
 	
 	FZoomEvent OnZoomFontSize;
-	FZoomEvent OnZoomColumnCount;
+	FZoomEvent OnZoomCellPadding;
 };
