@@ -18,15 +18,15 @@ void SUnicodeCharacterGridEntry::Construct(FArguments const& InArgs)
 
 	OnZoomFontSize = InArgs._OnZoomFontSize;
 	OnZoomCellPadding = InArgs._OnZoomCellPadding;
-	
+
 	SBorder::Construct(
 		SBorder::FArguments()
 		.BorderImage(nullptr)
 		.OnMouseMove(InArgs._OnMouseMove)
-		.VAlign(VAlign_Center))
-	;
+		.VAlign(VAlign_Center)
+	);
 
-	if(!UnicodeCharacter.IsValid())
+	if (!UnicodeCharacter.IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("[SUnicodeCharacterGridEntry::Construct] Widget created without valid CharacterRow pointer"));
 		return;
@@ -52,7 +52,7 @@ void SUnicodeCharacterGridEntry::SetFontInfo(FSlateFontInfo const& FontInfoIn)
 
 void SUnicodeCharacterGridEntry::OnMouseEnter(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent)
 {
-	SetToolTipText(FText::FromString(FString::Printf(TEXT("Char Code: U+%-06.04X.\nDouble-Click to copy: %s."), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)));
+	SetToolTipText(FText::GetEmpty());
 	SBorder::OnMouseEnter(MyGeometry, MouseEvent);
 	SetColorAndOpacity(FLinearColor(0, 0.44, 0.88));
 }
@@ -65,19 +65,19 @@ void SUnicodeCharacterGridEntry::OnMouseLeave(FPointerEvent const& MouseEvent)
 
 FReply SUnicodeCharacterGridEntry::OnMouseWheel(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent)
 {
-	if(MouseEvent.GetWheelDelta() && MouseEvent.IsControlDown())
+	if (MouseEvent.GetWheelDelta() && MouseEvent.IsControlDown())
 	{
 		// CTRL + !Shift => Zoom Font
-		if(!MouseEvent.IsShiftDown() && OnZoomFontSize.IsBound())
+		if (!MouseEvent.IsShiftDown() && OnZoomFontSize.IsBound())
 		{
-			OnZoomFontSize.Execute(MouseEvent.GetWheelDelta());			
+			OnZoomFontSize.Execute(MouseEvent.GetWheelDelta());
 			return FReply::Handled();
 		}
 
 		// CTRL + Shift => Zoom Columns
-		if(MouseEvent.IsShiftDown() && OnZoomCellPadding.IsBound())
+		if (MouseEvent.IsShiftDown() && OnZoomCellPadding.IsBound())
 		{
-			OnZoomCellPadding.Execute(MouseEvent.GetWheelDelta());			
+			OnZoomCellPadding.Execute(MouseEvent.GetWheelDelta());
 			return FReply::Handled();
 		}
 	}
@@ -90,7 +90,7 @@ FReply SUnicodeCharacterGridEntry::OnMouseButtonDoubleClick(FGeometry const& MyG
 	SBorder::OnMouseButtonDoubleClick(MyGeometry, MouseEvent);
 	// the color and tooltip get reset by MouseEnter/MouseLeave 
 	SetColorAndOpacity(FLinearColor(0.35, 1.0, 0.35, 1.0));
-	SetToolTipText(FText::FromString(FString::Printf(TEXT("Character copied to clipboard"), UnicodeCharacter->Codepoint, *UnicodeCharacter->Character)));
+	SetToolTipText(FText::FromString(FString::Printf(TEXT("Character copied to clipboard"))));
 	FPlatformApplicationMisc::ClipboardCopy(*UnicodeCharacter->Character);
 	return FReply::Handled();
 }
