@@ -138,7 +138,7 @@ TSharedRef<SExpandableArea> SUnicodeBrowserSidePanel::MakeBlockRangesSidebar()
 					if (RangeCharacters->Num() > 0)
 					{
 						// we scroll to the first character within that range
-						TSharedPtr<FUnicodeBrowserRow>& Character = (*RangeCharacters)[0];
+						TSharedPtr<FUnicodeBrowserRow> const& Character = (*RangeCharacters)[0];
 
 						// we can't use animated scroll as the layout invalidation of the RangeWidgets would be to early
 						// see PR: https://github.com/EpicGames/UnrealEngine/pull/12580

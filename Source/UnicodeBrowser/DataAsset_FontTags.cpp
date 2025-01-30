@@ -2,6 +2,17 @@
 
 #include "DataAsset_FontTags.h"
 
+#include "Dom/JsonObject.h"
+
+#include "Engine/Font.h"
+
+#include "Fonts/SlateFontInfo.h"
+
+#include "Misc/FileHelper.h"
+
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+
 TArray<FUnicodeCharacterTags>& UDataAsset_FontTags::GetCharactersMerged() const
 {
 	if (CharactersMerged.IsEmpty())
@@ -93,7 +104,7 @@ void UDataAsset_FontTags::CacheCodepoints() const
 	}
 }
 
-TArray<FString> UDataAsset_FontTags::GetCodepointTags(int32 Codepoint) const
+TArray<FString> UDataAsset_FontTags::GetCodepointTags(int32 const Codepoint) const
 {
 	if (CodepointLookup.IsEmpty())
 	{
@@ -113,8 +124,8 @@ TArray<FString> UDataAsset_FontTags::GetCodepointTags(int32 Codepoint) const
 bool UDataAsset_FontTags::ImportFromJson(FString Filename)
 {
 	FString JsonString;
-	if (!FFileHelper::LoadFileToString(JsonString, *Filename))
-		return false;
+
+	if (!FFileHelper::LoadFileToString(JsonString, *Filename)) return false;
 
 	SourceFile = Filename;
 
@@ -123,7 +134,7 @@ bool UDataAsset_FontTags::ImportFromJson(FString Filename)
 	TArray<FString> TagFields;
 
 	TSharedPtr<FJsonObject> JsonObject = MakeShared<FJsonObject>();
-	const auto Reader = TJsonReaderFactory<>::Create(JsonString);
+	auto const Reader = TJsonReaderFactory<>::Create(JsonString);
 	FJsonSerializer::Deserialize(Reader, JsonObject);
 
 	if (!JsonObject->HasTypedField<EJson::Array>(TEXT("tagFields")))
@@ -148,9 +159,9 @@ bool UDataAsset_FontTags::ImportFromJson(FString Filename)
 	if (Glyphs.IsEmpty())
 		return false;
 
-	for (TSharedPtr<FJsonValue>& GlyphValue : Glyphs)
+	for (TSharedPtr<FJsonValue> const& GlyphValue : Glyphs)
 	{
-		TSharedPtr<FJsonObject> Glyph = GlyphValue->AsObject();
+		TSharedPtr<FJsonObject> const Glyph = GlyphValue->AsObject();
 		FUnicodeCharacterTags Data;
 
 		if (CodePointFieldDecimal.Len() > 0)
