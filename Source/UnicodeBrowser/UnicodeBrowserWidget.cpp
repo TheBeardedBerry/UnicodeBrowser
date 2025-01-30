@@ -383,7 +383,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 
 SUnicodeBrowserWidget::~SUnicodeBrowserWidget()
 {
-	if (Options)
+	if (IsValid(Options))
 	{
 		Options->OnChanged.Remove(OnOptionsChangedHandle);
 	}
