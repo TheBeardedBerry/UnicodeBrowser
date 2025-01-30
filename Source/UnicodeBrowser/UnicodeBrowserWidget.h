@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "Engine/TimerHandle.h"
+
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
@@ -51,13 +53,19 @@ public:
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> RowsRaw; // a raw list of all characters for the current font
 	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows; // a filtered view of the raw data, those are the characters that a
 
+	bool bShouldDisableThrottle = false;
+	FDelegateHandle DisableCPUThrottleHandle;
+	FTimerHandle ReenableThrottleHandle;
+
 public:
 	void Construct(FArguments const& InArgs);
 	virtual ~SUnicodeBrowserWidget() override;
 
-	TSharedRef<ITableRow> GenerateItemRow(TSharedPtr<FUnicodeBrowserRow> CharacterData, TSharedRef<STableViewBase> const& OwnerTable);
-	virtual void Tick(FGeometry const& AllottedGeometry, double InCurrentTime, float InDeltaTime) override;
 	void MarkDirty(uint8 Flags);
+	TSharedRef<ITableRow> GenerateItemRow(TSharedPtr<FUnicodeBrowserRow> CharacterData, TSharedRef<STableViewBase> const& OwnerTable);
+
+	virtual void Tick(FGeometry const& AllottedGeometry, double InCurrentTime, float InDeltaTime) override;
+	virtual FReply OnMouseMove(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent) override;
 
 protected:
 	TArray<TSharedPtr<FUnicodeBrowserRow>> CharacterWidgetsArray;
@@ -75,9 +83,15 @@ protected:
 
 	void FilterByString(FString Needle);
 
-	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
+	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row);
+	void OnCharactersTileViewScrolled(double X);
+	void DisableThrottlingTemporarily();
+
 	void HandleZoomFont(float Offset);
 	void HandleZoomPadding(float Offset);
+	bool ShouldDisableCPUThrottling() const;
+	void SetUpDisableCPUThrottlingDelegate();
+	void CleanUpDisableCPUThrottlingDelegate();
 
 private:
 	UToolMenu* CreateMenuSection_Settings();

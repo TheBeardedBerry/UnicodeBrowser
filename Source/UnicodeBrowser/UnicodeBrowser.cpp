@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// SPDX-FileCopyrightText: 2025 NTY.studio
 
 #include "UnicodeBrowser.h"
 
@@ -23,20 +23,21 @@ void FUnicodeBrowserModule::StartupModule()
 	FUnicodeBrowserStyle::ReloadTextures();
 
 	FUnicodeBrowserCommands::Register();
-	
+
 	PluginCommands = MakeShareable(new FUICommandList);
 
 	PluginCommands->MapAction(
 		FUnicodeBrowserCommands::Get().OpenPluginWindow,
 		FExecuteAction::CreateRaw(this, &FUnicodeBrowserModule::PluginButtonClicked),
-		FCanExecuteAction());
+		FCanExecuteAction()
+	);
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FUnicodeBrowserModule::RegisterMenus));
-	
+
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(UnicodeBrowserTabName, FOnSpawnTab::CreateRaw(this, &FUnicodeBrowserModule::OnSpawnPluginTab))
-		.SetIcon(FSlateIcon(FUnicodeBrowserStyle::GetStyleSetName(), "UnicodeBrowser.OpenPluginWindow")) 
-		.SetDisplayName(LOCTEXT("FUnicodeBrowserTabTitle", "Unicode Browser"))
-		.SetMenuType(ETabSpawnerMenuType::Hidden);
+	                        .SetIcon(FSlateIcon(FUnicodeBrowserStyle::GetStyleSetName(), "UnicodeBrowser.OpenPluginWindow"))
+	                        .SetDisplayName(LOCTEXT("FUnicodeBrowserTabTitle", "Unicode Browser"))
+	                        .SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
 void FUnicodeBrowserModule::ShutdownModule()
@@ -52,11 +53,9 @@ void FUnicodeBrowserModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UnicodeBrowserTabName);
 }
 
-
 TSharedRef<SDockTab> FUnicodeBrowserModule::OnSpawnPluginTab(FSpawnTabArgs const& SpawnTabArgs)
 {
 	return SNew(SDockTab)
-	
 		.TabRole(ETabRole::NomadTab)
 		[
 			SNew(SVerticalBox)
@@ -85,15 +84,15 @@ void FUnicodeBrowserModule::RegisterMenus()
 	{
 		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("MainFrame.MainMenu.Window");
 		{
-			if(FToolMenuSection *Section = &Menu->FindOrAddSection("Tools"))
+			if (FToolMenuSection* Section = &Menu->FindOrAddSection("Tools"))
 			{
-				if(Section->Label.Get(FText::GetEmpty()).IsEmpty()) Section->Label = INVTEXT("TOOLS");
-				Section->AddMenuEntryWithCommandList(FUnicodeBrowserCommands::Get().OpenPluginWindow, PluginCommands);	
-			}			
+				if (Section->Label.Get(FText::GetEmpty()).IsEmpty()) Section->Label = INVTEXT("TOOLS");
+				Section->AddMenuEntryWithCommandList(FUnicodeBrowserCommands::Get().OpenPluginWindow, PluginCommands);
+			}
 		}
 	}
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FUnicodeBrowserModule, UnicodeBrowser)

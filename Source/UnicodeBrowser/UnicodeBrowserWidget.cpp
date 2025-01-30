@@ -1,10 +1,12 @@
 ﻿// SPDX-FileCopyrightText: 2025 NTY.studio
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
+#include "Editor.h"
 #include "ISinglePropertyView.h"
 #include "SlateOptMacros.h"
 #include "ToolMenus.h"
 #include "UnicodeBrowserOptions.h"
+
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Framework/Application/SlateApplication.h"
@@ -17,7 +19,6 @@
 #include "Widgets/SUnicodeBrowserSidePanel.h"
 #include "Widgets/SUnicodeCharacterGridEntry.h"
 #include "Widgets/Images/SLayeredImage.h"
-
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Input/SSpinBox.h"
@@ -33,10 +34,19 @@ SUnicodeBrowserWidget::~SUnicodeBrowserWidget()
 {
 	UToolMenus::Get()->RemoveMenu("UnicodeBrowser.Settings");
 	UToolMenus::Get()->RemoveMenu("UnicodeBrowser.Font");
+	UUnicodeBrowserOptions::Get()->OnFontChanged.RemoveAll(this);
+	CleanUpDisableCPUThrottlingDelegate();
+}
+
+FReply SUnicodeBrowserWidget::OnMouseMove(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent)
+{
+	DisableThrottlingTemporarily();
+	return SCompoundWidget::OnMouseMove(MyGeometry, MouseEvent);
 }
 
 void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 {
+	SetUpDisableCPUThrottlingDelegate();
 	CurrentFont = UUnicodeBrowserOptions::Get()->GetFontInfo();
 
 	UUnicodeBrowserOptions::Get()->OnFontChanged.RemoveAll(this);
@@ -248,6 +258,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 				.ItemAlignment(EListItemAlignment::EvenlySize)
 				.SelectionMode(ESelectionMode::None)
 				.OnGenerateTile(this, &SUnicodeBrowserWidget::GenerateItemRow)
+				.OnTileViewScrolled(this, &SUnicodeBrowserWidget::OnCharactersTileViewScrolled)
 			]
 			+ SSplitter::Slot()
 			.SizeRule(SSplitter::FractionOfParent)
@@ -709,13 +720,40 @@ void SUnicodeBrowserWidget::FilterByString(FString Needle)
 	}
 }
 
-FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const
+FReply SUnicodeBrowserWidget::OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row)
 {
 	if (CurrentRow == Row) return FReply::Unhandled();
 	CurrentRow = Row;
 
 	OnCharacterHighlight.ExecuteIfBound(Row.Get());
 	return FReply::Handled();
+}
+
+void SUnicodeBrowserWidget::OnCharactersTileViewScrolled(double X)
+{
+	DisableThrottlingTemporarily();
+}
+
+void SUnicodeBrowserWidget::DisableThrottlingTemporarily()
+{
+	// disable the CPU throttle for a short time so the user can scroll through the list without lag, even if the window isn't in the foreground
+	// this can be an issue if the user has the editor preference "Use Less CPU when in Background" enabled.
+	// i.e. if we allow the user to scroll, we should allow them to do so smoothly
+	// We only disable throttling for 1s, which should be time enough for scrolling/interaction
+	bShouldDisableThrottle = true;
+	TWeakPtr<SUnicodeBrowserWidget> LocalWeakThis = SharedThis(this);
+	GEditor->GetTimerManager()->SetTimer(
+		ReenableThrottleHandle,
+		[LocalWeakThis]()
+		{
+			if (LocalWeakThis.IsValid())
+			{
+				LocalWeakThis.Pin()->bShouldDisableThrottle = false;
+			}
+		},
+		1.0f,
+		false
+	);
 }
 
 void SUnicodeBrowserWidget::HandleZoomFont(float const Offset)
@@ -733,6 +771,34 @@ void SUnicodeBrowserWidget::HandleZoomPadding(float const Offset)
 
 	CharactersTileView->RebuildList();
 	MarkDirty(static_cast<uint8>(EDirtyFlags::FONT_STYLE));
+}
+
+bool SUnicodeBrowserWidget::ShouldDisableCPUThrottling() const
+{
+	return bShouldDisableThrottle;
+}
+
+void SUnicodeBrowserWidget::SetUpDisableCPUThrottlingDelegate()
+{
+	if (GEditor && !DisableCPUThrottleHandle.IsValid())
+	{
+		GEditor->ShouldDisableCPUThrottlingDelegates.Add(UEditorEngine::FShouldDisableCPUThrottling::CreateSP(this, &SUnicodeBrowserWidget::ShouldDisableCPUThrottling));
+		DisableCPUThrottleHandle = GEditor->ShouldDisableCPUThrottlingDelegates.Last().GetHandle();
+	}
+}
+
+void SUnicodeBrowserWidget::CleanUpDisableCPUThrottlingDelegate()
+{
+	if (GEditor && DisableCPUThrottleHandle.IsValid())
+	{
+		GEditor->ShouldDisableCPUThrottlingDelegates.RemoveAll(
+			[this](UEditorEngine::FShouldDisableCPUThrottling const& Delegate)
+			{
+				return Delegate.GetHandle() == DisableCPUThrottleHandle;
+			}
+		);
+		DisableCPUThrottleHandle.Reset();
+	}
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

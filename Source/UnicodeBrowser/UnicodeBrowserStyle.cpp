@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// SPDX-FileCopyrightText: 2025 NTY.studio
 
 #include "UnicodeBrowserStyle.h"
 
@@ -40,11 +40,11 @@ FName FUnicodeBrowserStyle::GetStyleSetName()
 FVector2D const Icon16x16(16.0f, 16.0f);
 FVector2D const Icon20x20(20.0f, 20.0f);
 
-TSharedRef< FSlateStyleSet > FUnicodeBrowserStyle::Create()
+TSharedRef<FSlateStyleSet> FUnicodeBrowserStyle::Create()
 {
-	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("UnicodeBrowserStyle"));
+	TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet("UnicodeBrowserStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("UnicodeBrowser")->GetBaseDir() / TEXT("Resources"));
-	
+
 	Style->Set("UnicodeBrowser.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
 
 	return Style;

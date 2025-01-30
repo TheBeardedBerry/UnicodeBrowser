@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// SPDX-FileCopyrightText: 2025 NTY.studio
 
 #pragma once
 
@@ -6,22 +6,17 @@
 
 class FToolBarBuilder;
 class FMenuBuilder;
+
 class FUnicodeBrowserModule : public IModuleInterface
 {
 public:
-
-	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	
-	/** This function will be bound to Command (by default it will bring up plugin window) */
+
 	void PluginButtonClicked();
-private:
 
+private:
 	void RegisterMenus();
-
 	TSharedRef<class SDockTab> OnSpawnPluginTab(class FSpawnTabArgs const& SpawnTabArgs);
-
-private:
 	TSharedPtr<class FUICommandList> PluginCommands;
 };
