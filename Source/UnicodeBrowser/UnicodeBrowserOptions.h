@@ -1,47 +1,82 @@
 // SPDX-FileCopyrightText: 2025 NTY.studio
-
 #pragma once
 
 #include "CoreMinimal.h"
 
-#include "Styling/CoreStyle.h"
+#include "Engine/DeveloperSettings.h"
 
-#include "UObject/Object.h"
+#include "Styling/CoreStyle.h"
 
 #include "UnicodeBrowserOptions.generated.h"
 
-/**
- * 
- */
-UCLASS(Hidden, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "Font Options")
-class UNICODEBROWSER_API UUnicodeBrowserOptions : public UObject
+class UFont;
+struct FSlateFontInfo;
+class UDataAsset_FontTags;
+
+UCLASS(Config="Engine", DefaultConfig, meta = (DisplayName="Unicode Browser"))
+class UNICODEBROWSER_API UUnicodeBrowserOptions : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-	static TSharedRef<class IDetailsView> MakePropertyEditor(UUnicodeBrowserOptions* Options);
+	UPROPERTY(DisplayName="Preset")
+	TObjectPtr<UDataAsset_FontTags> Preset;
 
-	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties), Transient, DisplayName="Font")
-	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+	UPROPERTY(Config, EditAnywhere, meta=(UIMin=0))
+	int32 GridCellPadding = 5;
 
-	UPROPERTY(EditAnywhere)
-	int32 NumCols = 16;
+	// allow to toggle the right side panel on/off
+	UPROPERTY(Config, EditAnywhere)
+	bool bShowSidePanel = true;
 
 	// Show Characters which can't be displayed by the font
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(Config, EditAnywhere)
 	bool bShowMissing = false;
 
 	// Show Characters which have a measurement of 0x0 (primary for debug purposes)
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(Config, EditAnywhere)
 	bool bShowZeroSize = false;
 
 	// Cache the Character meta information while loading the font, this is slower while changing fonts, but may reduce delay for displaying character previews
-	UPROPERTY(EditAnywhere, AdvancedDisplay)
+	UPROPERTY(Config, EditAnywhere)
 	bool bCacheCharacterMetaOnLoad = false;
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnUbOptionsChangedDelegate, FPropertyChangedEvent*);
-	FOnUbOptionsChangedDelegate OnChanged;
+	// pick Unicode range based on what's available in the font
+	UPROPERTY(Config, EditAnywhere)
+	bool bAutoSetRangeOnFontChange = false;
+
+	UPROPERTY(Config, EditAnywhere)
+	bool bSearch_AutoSetRange = true;
+
+	UPROPERTY(Config, EditAnywhere)
+	bool bSearch_CaseSensitive = false;
+
+	UPROPERTY(Config, EditAnywhere)
+	bool bRangeSelector_HideEmptyRanges = false;
+
+	FSlateFontInfo& GetFontInfo();
+
+	void SetFontInfo(FSlateFontInfo const& FontInfoIn);
+
+	DECLARE_MULTICAST_DELEGATE(FOnUbOptionsChangedDelegate);
+	FOnUbOptionsChangedDelegate OnFontChanged;
 
 	virtual void PostInitProperties() override;
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	static UUnicodeBrowserOptions* Get();
+
+private:
+	UPROPERTY(Transient, DisplayName="Font")
+	FSlateFontInfo FontInfo = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+
+	UPROPERTY(Transient, DisplayName="Font")
+	TObjectPtr<UFont const> Font = nullptr;
+
+	UPROPERTY(Transient, DisplayName="FontTypeface", meta=(EditCondition="Font", GetOptions=GetTypeFaces))
+	FName FontTypeFace = NAME_None;
+
+	UFUNCTION()
+	TArray<FString> GetTypeFaces() const;
 };

@@ -21,7 +21,16 @@ class SListView;
 
 namespace UbCheckBoxList
 {
-	struct FItemPair;
+	struct FItemPair
+	{
+		TSharedRef<SWidget> Widget;
+
+		bool bIsChecked = false;
+		bool bIsVisible = true;
+
+		FItemPair(TSharedRef<SWidget> const& InWidget, bool const bInChecked, bool const bInVisible = true)
+			: Widget(InWidget), bIsChecked(bInChecked), bIsVisible(bInVisible) {}
+	};
 }
 
 DECLARE_DELEGATE_OneParam(FOnCheckListItemStateChanged, int32);
@@ -49,6 +58,7 @@ public:
 
 	ECheckBoxState bAllCheckedState = ECheckBoxState::Unchecked;
 	TArray<TSharedRef<UbCheckBoxList::FItemPair>> Items;
+	TArray<TSharedRef<UbCheckBoxList::FItemPair>> ItemsFiltered;
 
 	FCheckBoxStyle const* CheckBoxStyle = nullptr;
 	TSharedPtr<SListView<TSharedRef<UbCheckBoxList::FItemPair>>> ListView;
@@ -62,6 +72,8 @@ public:
 	bool IsItemChecked(int32 Index) const;
 	int32 AddItem(FText const& Text, bool bIsChecked);
 	int32 AddItem(TSharedRef<SWidget> Widget, bool bIsChecked);
+	int32 AddItem(TSharedRef<UbCheckBoxList::FItemPair> Item);
+
 	int32 GetNumCheckboxes() const;
 	void OnAllCheckedStateChanged(ECheckBoxState InNewState);
 	void OnItemCheckBoxChanged(TSharedRef<UbCheckBoxList::FItemPair> const& InItem);
@@ -69,6 +81,9 @@ public:
 	void RemoveAll();
 	void RemoveItem(int32 Index);
 	void SetItemChecked(int32 Index, ECheckBoxState InNewState);
+	void SetItemVisibility(int32 Index, bool bVisible);
 	void UncheckAll();
 	void UpdateAllChecked();
+
+	void UpdateItems();
 };

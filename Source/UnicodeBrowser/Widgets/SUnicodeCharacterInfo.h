@@ -6,22 +6,19 @@
 
 #include "../UnicodeBrowserRow.h"
 
-#include "Widgets/SCompoundWidget.h"
+#include "Widgets/SInvalidationPanel.h"
 
 /**
  * 
  */
-class UNICODEBROWSER_API SUnicodeCharacterInfo : public SCompoundWidget
+class UNICODEBROWSER_API SUnicodeCharacterInfo : public SInvalidationPanel
 {
 public:
 	SLATE_BEGIN_ARGS(SUnicodeCharacterInfo) {}
-		SLATE_ATTRIBUTE(TSharedPtr<FUnicodeBrowserRow>, Row);
+		SLATE_ARGUMENT(TSharedPtr<FUnicodeBrowserRow>, Row);
 	SLATE_END_ARGS()
 
 	void Construct(FArguments const& InArgs);
-
-	TAttribute<TSharedPtr<FUnicodeBrowserRow>> Row;
-	TSharedPtr<FUnicodeBrowserRow> GetRow() const;
 
 	void SetRow(TSharedPtr<FUnicodeBrowserRow> InRow);
 };

@@ -4,7 +4,7 @@ Unreal Engine Editor Plugin for viewing all supported Unicode Characters.
 
 ----
 > [!TIP]
-> Ever find the *perfect* unicode character for your Unreal editor tooling, only to paste it into Unreal and see a bunch of ��� or ￼￼￼ ?
+> Ever find the *perfect* Unicode character for your Unreal editor tooling, only to paste it into Unreal and see a bunch of ��� or ￼￼￼ ?
 > 
 > Those times are now over, friend.
 > 
@@ -33,6 +33,8 @@ Open Window via `Window -> Unicode Browser`
 * Show/hide missing characters
 * **Double-click a character to copy it to the system clipboard**.
 * Click a block name to scroll to that block.
+* Zoom: Change font size with CTRL + MouseWheel, change column count with CTRL + SHIFT + MouseWheel
+* Search: Search in Tags defined in a preset or by characters/letters, supports multiple search terms at once, e.g.: a,b,c,d
 
 > [!WARNING]
 > **Disclaimer:** Plugin is currently in its infancy and as such leaves much to be desired regarding the user-experience, but it's usable, and useful!

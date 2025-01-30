@@ -17,7 +17,7 @@ public:
 	static void ReloadTextures();
 
 	/** @return The Slate style set for the Shooter game */
-	static const ISlateStyle& Get();
+	static ISlateStyle const& Get();
 
 	static FName GetStyleSetName();
 

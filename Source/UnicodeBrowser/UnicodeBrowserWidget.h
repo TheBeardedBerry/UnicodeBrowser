@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 
-#include "Containers/Ticker.h"
-
 #include "Fonts/UnicodeBlockRange.h"
 
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/SUbSearchBar.h"
+#include "Widgets/Views/SListView.h"
+#include "Widgets/Views/STileView.h"
 
+class UToolMenu;
 class FUnicodeBrowserRow;
 class IDetailsView;
 class SCheckBoxList;
@@ -19,57 +21,66 @@ class STextBlock;
 class SUbCheckBoxList;
 class SUnicodeRangeWidget;
 class SUniformGridPanel;
-class UFont;
-class UUnicodeBrowserOptions;
-enum class EUnicodeBlockRange : uint16;
-struct FUnicodeBlockRange;
 
 class SUnicodeBrowserWidget : public SCompoundWidget
 {
+	friend class SUnicodeBrowserSidePanel;
+
+	enum class EDirtyFlags : uint8
+	{
+		YOLO = 0,
+		INIT = 1 << 0,
+		FONT_FACE = 1 << 1, // never use this to call MarkDirt, use FONT which also invalidates the style
+		FONT_STYLE = 1 << 2,
+		FONT = FONT_FACE | FONT_STYLE,
+		TILEVIEW_GRID_SIZE = 1 << 3
+	};
+
 public:
 	SLATE_BEGIN_ARGS(SUnicodeBrowserWidget) {}
 	SLATE_END_ARGS()
 
+	DECLARE_DELEGATE_OneParam(FHighlightCharacter, FUnicodeBrowserRow*)
+	FHighlightCharacter OnCharacterHighlight;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FFontChanged, FSlateFontInfo*)
+	FFontChanged OnFontChanged;
+
+	FSlateFontInfo DefaultFont = FCoreStyle::GetDefaultFontStyle("Regular", 18);
+
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> RowsRaw; // a raw list of all characters for the current font
+	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows; // a filtered view of the raw data, those are the characters that a
+
+public:
 	void Construct(FArguments const& InArgs);
 	virtual ~SUnicodeBrowserWidget() override;
-	void Update();
+
+	TSharedRef<ITableRow> GenerateItemRow(TSharedPtr<FUnicodeBrowserRow> CharacterData, TSharedRef<STableViewBase> const& OwnerTable);
+	virtual void Tick(FGeometry const& AllottedGeometry, double InCurrentTime, float InDeltaTime) override;
+	void MarkDirty(uint8 Flags);
 
 protected:
-	FDelegateHandle OnOptionsChangedHandle;
-	FTSTicker::FDelegateHandle NextTickHandle;
-	TArrayView<FUnicodeBlockRange const> Ranges; // all known Unicode ranges
-	TMap<EUnicodeBlockRange const, int32 const> CheckboxIndices; // range <> SUbCheckBoxList index 
-	TMap<EUnicodeBlockRange, TArray<TSharedPtr<FUnicodeBrowserRow>>> Rows;
-	TMap<EUnicodeBlockRange, TSharedPtr<SUnicodeRangeWidget>> RangeWidgets;
-	TObjectPtr<UUnicodeBrowserOptions> Options;
-	TSharedPtr<IDetailsView> FontDetailsView;
-	TSharedPtr<SExpandableArea> BlockRangesSidebar;
-	TSharedPtr<SScrollBox> RangeScrollbox;
-	TSharedPtr<STextBlock> CurrentCharacterView;
-	TSharedPtr<SUbCheckBoxList> RangeSelector;
-	bool bDirty = false;
+	TArray<TSharedPtr<FUnicodeBrowserRow>> CharacterWidgetsArray;
+	TSharedPtr<STileView<TSharedPtr<FUnicodeBrowserRow>>> CharactersTileView;
+	TSharedPtr<SUbSearchBar> SearchBar;
+	TSharedPtr<class SUnicodeBrowserSidePanel> SidePanel;
+
 	mutable TSharedPtr<FUnicodeBrowserRow> CurrentRow;
+	FSlateFontInfo CurrentFont = DefaultFont;
 
 protected:
-	FReply OnCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent, FString Character) const;
-	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
-	FReply OnCurrentCharacterClicked(FGeometry const& Geometry, FPointerEvent const& PointerEvent) const;
-	FReply OnOnlyBlocksWithCharactersClicked() const;
-	FReply OnOnlySymbolsClicked();
-	FReply OnRangeClicked(EUnicodeBlockRange BlockRange) const;
-	void HandleFontChanged();
-	void HandleZoomColumns(float Offset);
-	void HandleZoomFont(float Offset);
-	void MarkDirty();
-	void UpdateRangeVisibility(int32 Index);
-	FSlateFontInfo GetFontInfo() const;
-
-	TSharedPtr<SExpandableArea> MakeBlockRangesSidebar();
-	TSharedPtr<SUbCheckBoxList> MakeBlockRangeSelector();
-
 	void PopulateSupportedCharacters();
-	void RebuildGrid();
-	void RebuildGridRange(TSharedPtr<SUnicodeRangeWidget> RangeWidget) const;
-	void SelectAllRangesWithCharacters() const;
-	void UpdateFromFont(FPropertyChangedEvent* PropertyChangedEvent = nullptr);
+	void UpdateCharacters();
+	void UpdateCharactersArray();
+
+	void FilterByString(FString Needle);
+
+	FReply OnCharacterMouseMove(FGeometry const& Geometry, FPointerEvent const& PointerEvent, TSharedPtr<FUnicodeBrowserRow> Row) const;
+	void HandleZoomFont(float Offset);
+	void HandleZoomPadding(float Offset);
+
+private:
+	UToolMenu* CreateMenuSection_Settings();
+	void SetSidePanelVisibility(bool bVisible = true);
+	uint8 DirtyFlags;
 };

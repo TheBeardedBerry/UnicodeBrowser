@@ -37,14 +37,14 @@ FName FUnicodeBrowserStyle::GetStyleSetName()
 	return StyleSetName;
 }
 
-const FVector2D Icon16x16(16.0f, 16.0f);
-const FVector2D Icon20x20(20.0f, 20.0f);
+FVector2D const Icon16x16(16.0f, 16.0f);
+FVector2D const Icon20x20(20.0f, 20.0f);
 
 TSharedRef< FSlateStyleSet > FUnicodeBrowserStyle::Create()
 {
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("UnicodeBrowserStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("UnicodeBrowser")->GetBaseDir() / TEXT("Resources"));
-
+	
 	Style->Set("UnicodeBrowser.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
 
 	return Style;
@@ -58,7 +58,7 @@ void FUnicodeBrowserStyle::ReloadTextures()
 	}
 }
 
-const ISlateStyle& FUnicodeBrowserStyle::Get()
+ISlateStyle const& FUnicodeBrowserStyle::Get()
 {
 	return *StyleInstance;
 }

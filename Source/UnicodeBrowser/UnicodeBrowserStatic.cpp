@@ -22,14 +22,17 @@ TOptional<EUnicodeBlockRange> UnicodeBrowser::GetUnicodeBlockRangeFromChar(int32
 
 TArrayView<FUnicodeBlockRange const> UnicodeBrowser::GetUnicodeBlockRanges()
 {
-	auto BlockRange = FUnicodeBlockRange::GetUnicodeBlockRanges();
-	BlockRange.StableSort(
-		[](FUnicodeBlockRange const& A, FUnicodeBlockRange const& B)
-		{
-			return A.DisplayName.CompareTo(B.DisplayName) < 0;
-		}
-	);
-	return BlockRange;
+	if (Ranges.IsEmpty())
+	{
+		Ranges = FUnicodeBlockRange::GetUnicodeBlockRanges();
+		Ranges.StableSort(
+			[](FUnicodeBlockRange const& A, FUnicodeBlockRange const& B)
+			{
+				return A.DisplayName.CompareTo(B.DisplayName) < 0;
+			}
+		);
+	}
+	return Ranges;
 }
 
 int32 UnicodeBrowser::GetRangeIndex(EUnicodeBlockRange BlockRange)

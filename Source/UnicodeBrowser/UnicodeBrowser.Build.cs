@@ -8,27 +8,14 @@ public class UnicodeBrowser : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicIncludePaths.AddRange(
-			new string[]
-			{
-				// ... add public include paths required here ...
-			}
-		);
-
-
-		PrivateIncludePaths.AddRange(
-			new string[]
-			{
-				// ... add other private include paths required here ...
-			}
-		);
-
+		// these should be disabled when debugging with debugger
+		OptimizeCode = CodeOptimization.Always;
+		OptimizationLevel = OptimizationMode.Speed;
 
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"Core",
-				// ... add other public dependencies that you statically link with here ...
 			}
 		);
 		AddEngineThirdPartyPrivateStaticDependencies(Target, "ICU");
@@ -38,12 +25,14 @@ public class UnicodeBrowser : ModuleRules
 			{
 				"ApplicationCore",
 				"CoreUObject",
+				"DeveloperSettings",
 				"EditorFramework",
-				"SceneOutliner",
 				"Engine",
 				"InputCore",
+				"Json", // required for importer
 				"Projects",
 				"PropertyEditor",
+				"SceneOutliner",
 				"Slate",
 				"SlateCore",
 				"ToolMenus",
@@ -51,14 +40,5 @@ public class UnicodeBrowser : ModuleRules
 				"UnrealEd",
 			}
 		);
-
-
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-		);
-		PublicDefinitions.Add("UDATA_DEBUG=1");
 	}
 }
