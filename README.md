@@ -71,7 +71,7 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 
 # Thanks
 
-* [ben-mkiv](https://github.com/ben-mkiv) For early testing, feedback and PRs [#1](https://github.com/ntystudio/UnicodeBrowser/pull/1), [#2](https://github.com/ntystudio/UnicodeBrowser/pull/2)
+* [ben-mkiv](https://github.com/ben-mkiv) For early testing, feedback and PRs [#1](https://github.com/ntystudio/UnicodeBrowser/pull/1), [#2](https://github.com/ntystudio/UnicodeBrowser/pull/2), [#3](https://github.com/ntystudio/UnicodeBrowser/pull/3)
 
 # License
 
