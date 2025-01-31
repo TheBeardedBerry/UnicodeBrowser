@@ -159,7 +159,7 @@ void SUnicodeBrowserWidget::Construct(FArguments const& InArgs)
 					[
 						SNew(SSpinBox<float>)
 						.Delta(1)
-						.Justification(EHorizontalAlignment::HAlign_Left)
+						.Justification(ETextJustify::Left)
 						.MinValue(6)
 						.MinDesiredWidth(150)
 						.MaxValue(200)
