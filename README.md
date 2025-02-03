@@ -83,5 +83,5 @@ MIT
 > # NTY Studio Plugins
 >
 > * [� Unicode Browser](https://github.com/ntystudio/UnicodeBrowser)
-> * [Extended State Tree](https://github.com/ntystudio/ExtendedStateTree)
+> * [Use State Tree](https://github.com/ntystudio/UseStateTree)
 > * [Reference Visualizer](https://github.com/ntystudio/CTRL-reference-visualizer)
