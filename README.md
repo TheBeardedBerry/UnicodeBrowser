@@ -77,10 +77,6 @@ Alternatively you can download a ZIP of this repo and place it in `YourProject/P
 
 MIT
 
-# See Also
-
-* [Font Viewer Editor Utility](https://github.com/DarknessFX/UEFontViewer)
-
 ----
 
 > [!Tip] 
@@ -91,3 +87,11 @@ MIT
 > * [CTRL.ReferenceVisualizer](https://github.com/ntystudio/CTRL.ReferenceVisualizer)
 > * [CTRL.Core](https://github.com/ntystudio/CTRL.Core)
 > * [CTRL.Gas](https://github.com/ntystudio/CTRL.Gas)
+
+----
+
+# See Also
+
+* [FontViewer (Editor Utility)](https://github.com/DarknessFX/UEFontViewer)
+* 
+
