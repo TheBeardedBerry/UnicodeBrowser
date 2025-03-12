@@ -79,6 +79,12 @@ MIT
 
 ----
 
+# See Also
+
+* [FontViewer (Editor Utility)](https://github.com/DarknessFX/UEFontViewer)
+
+----
+
 > [!Tip] 
 > # NTY Studio Plugins
 >
@@ -87,11 +93,3 @@ MIT
 > * [CTRL.ReferenceVisualizer](https://github.com/ntystudio/CTRL.ReferenceVisualizer)
 > * [CTRL.Core](https://github.com/ntystudio/CTRL.Core)
 > * [CTRL.Gas](https://github.com/ntystudio/CTRL.Gas)
-
-----
-
-# See Also
-
-* [FontViewer (Editor Utility)](https://github.com/DarknessFX/UEFontViewer)
-* 
-
