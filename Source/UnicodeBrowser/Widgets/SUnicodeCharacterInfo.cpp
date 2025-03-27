@@ -1,9 +1,11 @@
 #include "SUnicodeCharacterInfo.h"
 
 #include "SlateOptMacros.h"
+#include "UnicodeBrowser/DataAsset_FontTags.h"
 #include "UnicodeBrowser/UnicodeBrowserOptions.h"
 
 #include "UnicodeBrowser/UnicodeBrowserRow.h"
+#include "UnicodeBrowser/UnicodeBrowserStatic.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
