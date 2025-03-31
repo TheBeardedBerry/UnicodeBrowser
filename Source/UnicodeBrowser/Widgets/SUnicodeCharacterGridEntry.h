@@ -33,6 +33,9 @@ public:
 	virtual FReply OnMouseWheel(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent) override;
 	virtual FReply OnMouseButtonDoubleClick(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent) override;
 
+
+	static FSlateBrush BorderBrush;
+	
 private:
 	TSharedPtr<FUnicodeBrowserRow> UnicodeCharacter;
 	TSharedPtr<STextBlock> TextBlock;
