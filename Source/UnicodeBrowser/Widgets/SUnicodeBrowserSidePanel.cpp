@@ -5,6 +5,7 @@
 #include "SlateOptMacros.h"
 
 #include "HAL/PlatformApplicationMisc.h"
+#include "UnicodeBrowser/UnicodeBrowserStatic.h"
 
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 

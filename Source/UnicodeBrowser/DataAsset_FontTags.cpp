@@ -123,7 +123,7 @@ TArray<FString> UDataAsset_FontTags::GetCodepointTags(int32 const Codepoint) con
 
 bool UDataAsset_FontTags::ImportFromJson(FString Filename)
 {
-	FString JsonString;
+	FString JsonString = "";
 
 	if (!FFileHelper::LoadFileToString(JsonString, *Filename)) return false;
 
@@ -138,12 +138,13 @@ bool UDataAsset_FontTags::ImportFromJson(FString Filename)
 	FJsonSerializer::Deserialize(Reader, JsonObject);
 
 	if (!JsonObject->HasTypedField<EJson::Array>(TEXT("tagFields")))
-	{
 		return false;
-	}
 
-	JsonObject->TryGetStringField(TEXT("codepointFieldDecimal"), CodePointFieldDecimal);
-	JsonObject->TryGetStringField(TEXT("codepointFieldHexadecimal"), CodePointFieldHexadecimal);
+	if(JsonObject->HasTypedField<EJson::String>(TEXT("codepointFieldDecimal")))
+		JsonObject->TryGetStringField(TEXT("codepointFieldDecimal"), CodePointFieldDecimal);
+	
+	if(JsonObject->HasTypedField<EJson::String>(TEXT("codepointFieldHexadecimal")))
+		JsonObject->TryGetStringField(TEXT("codepointFieldHexadecimal"), CodePointFieldHexadecimal);
 
 	if (CodePointFieldDecimal.IsEmpty() && CodePointFieldHexadecimal.IsEmpty())
 		return false;

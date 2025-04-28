@@ -16,7 +16,7 @@
 	"Modules": [
 		{
 			"Name": "UnicodeBrowser",
-			"Type": "Editor",
+			"Type": "EditorNoCommandlet",
 			"LoadingPhase": "PostDefault"
 		}
 	]

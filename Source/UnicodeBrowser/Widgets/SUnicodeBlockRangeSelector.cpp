@@ -5,6 +5,7 @@
 #include "SlateOptMacros.h"
 
 #include "UnicodeBrowser/UnicodeBrowserOptions.h"
+#include "UnicodeBrowser/UnicodeBrowserStatic.h"
 #include "UnicodeBrowser/UnicodeBrowserWidget.h"
 
 #include "Widgets/Input/SCheckBox.h"

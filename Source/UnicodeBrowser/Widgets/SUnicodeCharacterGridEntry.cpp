@@ -12,6 +12,8 @@
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
+FSlateBrush SUnicodeCharacterGridEntry::BorderBrush = FSlateBrush();
+
 void SUnicodeCharacterGridEntry::Construct(FArguments const& InArgs)
 {
 	UnicodeCharacter = InArgs._UnicodeCharacter.Get();
@@ -19,9 +21,15 @@ void SUnicodeCharacterGridEntry::Construct(FArguments const& InArgs)
 	OnZoomFontSize = InArgs._OnZoomFontSize;
 	OnZoomCellPadding = InArgs._OnZoomCellPadding;
 
+	// idk if there's a nicer way to initialize the static brush... once.
+	BorderBrush.DrawAs = ESlateBrushDrawType::RoundedBox;
+	BorderBrush.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+	BorderBrush.OutlineSettings.CornerRadii = FVector4(10.0, 10.0, 10.0, 10.0);
+	
 	SBorder::Construct(
 		SBorder::FArguments()
-		.BorderImage(nullptr)
+		.BorderBackgroundColor(FLinearColor::Transparent)
+		.BorderImage(&BorderBrush)
 		.OnMouseMove(InArgs._OnMouseMove)
 		.VAlign(VAlign_Center)
 	);
@@ -54,13 +62,13 @@ void SUnicodeCharacterGridEntry::OnMouseEnter(FGeometry const& MyGeometry, FPoin
 {
 	SetToolTipText(FText::GetEmpty());
 	SBorder::OnMouseEnter(MyGeometry, MouseEvent);
-	SetColorAndOpacity(FLinearColor(0, 0.44, 0.88));
+	SetBorderBackgroundColor(FLinearColor(0, 0.44, 0.88, 0.1));
 }
 
 void SUnicodeCharacterGridEntry::OnMouseLeave(FPointerEvent const& MouseEvent)
 {
 	SBorder::OnMouseLeave(MouseEvent);
-	SetColorAndOpacity(FLinearColor::White);
+	SetBorderBackgroundColor(FLinearColor::Transparent);
 }
 
 FReply SUnicodeCharacterGridEntry::OnMouseWheel(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent)
@@ -89,7 +97,7 @@ FReply SUnicodeCharacterGridEntry::OnMouseButtonDoubleClick(FGeometry const& MyG
 {
 	SBorder::OnMouseButtonDoubleClick(MyGeometry, MouseEvent);
 	// the color and tooltip get reset by MouseEnter/MouseLeave 
-	SetColorAndOpacity(FLinearColor(0.35, 1.0, 0.35, 1.0));
+	SetBorderBackgroundColor(FLinearColor(0.35, 1.0, 0.35, 0.2));
 	SetToolTipText(FText::FromString(FString::Printf(TEXT("Character copied to clipboard"))));
 	FPlatformApplicationMisc::ClipboardCopy(*UnicodeCharacter->Character);
 	return FReply::Handled();
