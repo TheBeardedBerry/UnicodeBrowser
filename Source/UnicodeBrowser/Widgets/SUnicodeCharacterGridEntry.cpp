@@ -25,7 +25,7 @@ void SUnicodeCharacterGridEntry::Construct(FArguments const& InArgs)
 	BorderBrush.DrawAs = ESlateBrushDrawType::RoundedBox;
 	BorderBrush.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
 	BorderBrush.OutlineSettings.CornerRadii = FVector4(10.0, 10.0, 10.0, 10.0);
-	
+
 	SBorder::Construct(
 		SBorder::FArguments()
 		.BorderBackgroundColor(FLinearColor::Transparent)

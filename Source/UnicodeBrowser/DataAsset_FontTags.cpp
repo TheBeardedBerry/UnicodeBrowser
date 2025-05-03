@@ -140,10 +140,10 @@ bool UDataAsset_FontTags::ImportFromJson(FString Filename)
 	if (!JsonObject->HasTypedField<EJson::Array>(TEXT("tagFields")))
 		return false;
 
-	if(JsonObject->HasTypedField<EJson::String>(TEXT("codepointFieldDecimal")))
+	if (JsonObject->HasTypedField<EJson::String>(TEXT("codepointFieldDecimal")))
 		JsonObject->TryGetStringField(TEXT("codepointFieldDecimal"), CodePointFieldDecimal);
-	
-	if(JsonObject->HasTypedField<EJson::String>(TEXT("codepointFieldHexadecimal")))
+
+	if (JsonObject->HasTypedField<EJson::String>(TEXT("codepointFieldHexadecimal")))
 		JsonObject->TryGetStringField(TEXT("codepointFieldHexadecimal"), CodePointFieldHexadecimal);
 
 	if (CodePointFieldDecimal.IsEmpty() && CodePointFieldHexadecimal.IsEmpty())

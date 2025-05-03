@@ -13,7 +13,7 @@ class UNICODEBROWSER_API SUnicodeCharacterGridEntry : public SBorder
 {
 public:
 	DECLARE_DELEGATE_OneParam(FZoomEvent, float Offset)
-	
+
 	SLATE_BEGIN_ARGS(SUnicodeCharacterGridEntry) {}
 		SLATE_ARGUMENT(SBorder::FArguments, ParentArgs)
 		SLATE_ARGUMENT(FSlateFontInfo, FontInfo)
@@ -33,9 +33,8 @@ public:
 	virtual FReply OnMouseWheel(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent) override;
 	virtual FReply OnMouseButtonDoubleClick(FGeometry const& MyGeometry, FPointerEvent const& MouseEvent) override;
 
-
 	static FSlateBrush BorderBrush;
-	
+
 private:
 	TSharedPtr<FUnicodeBrowserRow> UnicodeCharacter;
 	TSharedPtr<STextBlock> TextBlock;
