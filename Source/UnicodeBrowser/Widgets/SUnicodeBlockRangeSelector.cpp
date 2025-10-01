@@ -106,15 +106,19 @@ void SUnicodeBlockRangeSelector::SetRanges(TArray<EUnicodeBlockRange> const& Ran
 			continue;
 		}
 
-		if (CheckboxIndices[Range.Index], RangesToSet.Contains(Range.Index))
+		int32 const ItemIndex = CheckboxIndices[Range.Index];
+		
+		if (ItemIndex, RangesToSet.Contains(Range.Index))
 		{
-			CheckBoxList->SetItemChecked(CheckboxIndices[Range.Index], ECheckBoxState::Checked);
+			
+			CheckBoxList->SetItemChecked(ItemIndex, ECheckBoxState::Checked);
 		}
 		else if (bExclusive)
 		{
-			CheckBoxList->SetItemChecked(CheckboxIndices[Range.Index], ECheckBoxState::Unchecked);
+			CheckBoxList->SetItemChecked(ItemIndex, ECheckBoxState::Unchecked);
 		}
 	}
+}
 }
 
 void SUnicodeBlockRangeSelector::Tick(FGeometry const& AllottedGeometry, double const InCurrentTime, float const InDeltaTime)
